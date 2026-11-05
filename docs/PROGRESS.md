@@ -63,3 +63,6 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
      ≈16 GB and the server oscillates 4–7 GB over 370 updates.
   3. A crashed run restarted without a checkpoint appended to its old CSV → partial logs are now moved aside.
 - The failed VGG runs were deleted and are re-run from scratch by `scripts/queue_node2.sh` (sequential queue).
+- 21:18 VGG-11+CIFAR-10 FedASMU COMPLETED (5000 updates, 88 min wall, no OOM kill): final 0.673 / best 0.681
+  (paper 0.653, +2.0 pp); time to target 0.45 = 35 157 virtual s (paper 43 093 s, different time model).
+  Its LSTM history was saved as results/metrics/metahist_vgg11_cifar10.json for later pre-training. Next in queue: VGG C10 FedBuff.
