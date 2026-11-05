@@ -84,3 +84,8 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 - 02:23 VGG-11+CIFAR-100 FedBuff COMPLETED (5000 updates / 500 aggregations, 116 min wall): final 0.265 / best 0.268
   (paper 0.238, +2.7 pp); time to 0.12 = 99 668 virtual s (paper 167 053 s). Test loss rises after ~3400 updates
   (3.22 → 3.82) while accuracy still improves (overfitting/over-confidence, no NaN). Next: ablation profile (8 CNN runs).
+- 06:31 Ablation profile COMPLETED (8 CNN+CIFAR-10 runs, seed 0, 5000 updates each, no failures):
+  final accuracy FedASMU 0.540 (pilot), -DA 0.546, -FA 0.551, -0 0.555, FedAvg 0.541 (500 rounds),
+  FedBuff-paper-weight 0.542 (official 0.564), H1 0.540, H2 0.539, H3 0.547. All within ~1.5 pp of each other.
+  Single seed, so the differences are not significant. The paper's ablation ordering (FedASMU > -DA/-FA > -0) is **not** reproduced on CNN.
+  Next: VGG-11+CIFAR-100 FedASMU re-run (started 06:31), REPRODUCTION_REPORT.md.
