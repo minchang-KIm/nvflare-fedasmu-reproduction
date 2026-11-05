@@ -1,0 +1,9 @@
+# Short real-training functional check (few devices, tiny budget)
+overrides: {num_devices: 8, max_concurrency: 4, budget_updates: 24, budget_rounds: 3, eval_every: 8,
+            checkpoint_every: 12, local: {epochs: 3, batch_size: 50}, max_samples_per_device: 300,
+            use_cuda: false}   # CPU: GPUs on this host are shared with long-running jobs
+runs:
+  - {model: cnn, dataset: cifar10, algorithm: fedbuff}
+  - {model: cnn, dataset: cifar10, algorithm: fedbuff_paper}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu}
+  - {model: cnn, dataset: cifar10, algorithm: fedavg}

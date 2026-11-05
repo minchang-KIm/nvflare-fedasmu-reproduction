@@ -1,0 +1,22 @@
+# All model/dataset combinations available locally, both algorithms, seeds 0..2
+overrides: {}
+seeds: [0, 1, 2]
+runs:
+  - {model: cnn, dataset: cifar10, algorithm: fedbuff}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu}
+  - {model: cnn, dataset: cifar100, algorithm: fedbuff}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu}
+  - {model: vgg11, dataset: cifar10, algorithm: fedbuff}
+  - {model: vgg11, dataset: cifar10, algorithm: fedasmu}
+  - {model: vgg11, dataset: cifar100, algorithm: fedbuff}
+  - {model: vgg11, dataset: cifar100, algorithm: fedasmu}
+  - {model: lenet5, dataset: cifar10, algorithm: fedbuff}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu}
+  - {model: lenet5, dataset: cifar100, algorithm: fedbuff}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu}
+  - {model: resnet20, dataset: cifar100, algorithm: fedbuff}
+  - {model: resnet20, dataset: cifar100, algorithm: fedasmu}
+  - {model: alexnet, dataset: cifar10, algorithm: fedbuff}
+  - {model: alexnet, dataset: cifar10, algorithm: fedasmu}
+  - {model: alexnet, dataset: cifar100, algorithm: fedbuff}
+  - {model: alexnet, dataset: cifar100, algorithm: fedasmu}

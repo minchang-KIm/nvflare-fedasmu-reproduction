@@ -1,0 +1,8 @@
+# Paper Fig. 2 ablation on CNN + CIFAR-10
+overrides: {}
+runs:
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu_da}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu_fa}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu_0}
+  - {model: cnn, dataset: cifar10, algorithm: fedavg}
+  - {model: cnn, dataset: cifar10, algorithm: fedbuff_paper}

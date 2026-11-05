@@ -1,0 +1,38 @@
+# Shared reproduction settings.  Source tags: [paper] FedASMU AAAI'24 / arXiv appendix,
+# [fedbuff] FedBuff AISTATS'22, [assume] reproduction assumption (see docs/PAPER_REPRODUCTION.md)
+seed: 0
+num_devices: 100            # [paper] m = 100
+max_concurrency: 10         # [paper] m' = 10, "maximum parallelism 10% of devices"
+trigger_period: 10          # [paper] Table 5/6 "T = 10" (text also says 5 s) -> virtual seconds
+staleness_bound: 99         # [paper] tau = 99
+dirichlet_alpha: 0.5        # [assume] paper: "Dirichlet distribution (Li et al. 2021)", alpha not given
+hetero: 5.0                 # [paper] slowest device 5x slower than fastest, uniform sampling
+bw_min: 1.0                 # [assume] MB per virtual second
+bw_max: 5.0                 # [assume]
+request_latency: 0.1        # [assume] virtual seconds for the request message
+budget_updates: 5000        # [paper] "5000 as max number of epochs for asynchronous approaches" -> received local updates
+budget_rounds: 500          # [paper] "500 ... for synchronous approaches" (FedAvg)
+eval_every: 50              # received updates between test evaluations
+checkpoint_every: 500
+local:
+  epochs: 5                 # [assume] L (max local epochs) not given
+  batch_size: 50            # [assume]
+  lr_decay: 0.9998          # [assume] paper: "learning rate decay" (form not given); per received update
+fedbuff:
+  K: 10                     # [fedbuff] "K = 10 is a good choice and does not require tuning"
+  global_lr: 1.0            # [assume] NVFLARE BuffModelManager default
+  staleness_weight: true    # [fedbuff] Sec. 5 staleness scaling enabled
+fedasmu:
+  mu_alpha: 10.0            # [assume]
+  lambda0: 1.0              # [assume]
+  sigma0: 0.5               # [assume] (FedAsync polynomial exponent a = 0.5)
+  iota0: 0.01               # [assume]
+  mu_beta: 10.0             # [assume]
+  gamma0: 1.0               # [assume]
+  upsilon0: 0.5             # [assume]
+  rho: 0.1                  # [assume] baseline EMA factor
+  q_phi: 0.1                # [assume] Q-learning rate (Eq. 6 phi)
+  q_psi: 0.9                # [assume] discount (Eq. 6 psi)
+  epsilon: 0.1              # [assume] epsilon-greedy
+  lstm_hidden: 32           # [assume]
+  paper_sign: false         # see aggregation.py docstring

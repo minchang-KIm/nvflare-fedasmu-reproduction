@@ -1,0 +1,9 @@
+# Priority combinations with the paper system settings and full budget
+overrides: {}
+runs:
+  - {model: cnn, dataset: cifar10, algorithm: fedbuff}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu}
+  - {model: vgg11, dataset: cifar10, algorithm: fedbuff}
+  - {model: vgg11, dataset: cifar10, algorithm: fedasmu}
+  - {model: vgg11, dataset: cifar100, algorithm: fedbuff}
+  - {model: vgg11, dataset: cifar100, algorithm: fedasmu}
