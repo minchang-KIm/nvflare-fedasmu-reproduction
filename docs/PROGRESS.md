@@ -81,3 +81,6 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
   - The run is re-queued from scratch (no checkpoint, no meta pre-training, same as the VGG-C10 pilot)
     after the current queue. The underlying instability (lr 0.03 on VGG-11 without BN, 100 classes) is not
     changed. If the re-run degrades again, it is reported as such.
+- 02:23 VGG-11+CIFAR-100 FedBuff COMPLETED (5000 updates / 500 aggregations, 116 min wall): final 0.265 / best 0.268
+  (paper 0.238, +2.7 pp); time to 0.12 = 99 668 virtual s (paper 167 053 s). Test loss rises after ~3400 updates
+  (3.22 → 3.82) while accuracy still improves (overfitting/over-confidence, no NaN). Next: ablation profile (8 CNN runs).
