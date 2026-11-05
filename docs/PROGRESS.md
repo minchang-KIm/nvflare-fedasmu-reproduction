@@ -70,3 +70,14 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
   final 0.662 / best 0.668 (paper 0.620, +4.2 pp); time to 0.45 = 53 433 virtual s vs FedASMU 35 157 s
   (FedASMU 34 % faster to target; paper: 43 093 vs 109 082 s). Next in queue: VGG-11+CIFAR-100 FedASMU.
 - Git: node2's checkout is written by the running queue, so pushes go to branch `node1-sync` on node2.
+- 00:27 VGG-11+CIFAR-100 FedASMU **diverged** (run itself finished, status COMPLETED, but the result is invalid):
+  accuracy rose to best 0.2637 (paper 0.264) at ~2900 updates, but test loss had been rising since ~2400.
+  At update 2990 one device's local training (device 96, lr 0.0165) produced NaN weights.
+  The server aggregated them, so α, λ, σ, ι and the global model became NaN, and accuracy fell to 0.01.
+  The run is archived under results/failed_runs/pilot_vgg11_cifar100_fedasmu_s0_diverged (with its LSTM history).
+  - Fix (all algorithms): the controller now rejects an update whose weights are not finite, counts it as a
+    failed device (`slot_src = rejected:nonfinite`, `rejected_nonfinite` in server_summary.json), and does not
+    aggregate it. Tests: 35 passed.
+  - The run is re-queued from scratch (no checkpoint, no meta pre-training, same as the VGG-C10 pilot)
+    after the current queue. The underlying instability (lr 0.03 on VGG-11 without BN, 100 classes) is not
+    changed. If the re-run degrades again, it is reported as such.

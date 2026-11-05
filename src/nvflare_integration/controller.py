@@ -104,6 +104,7 @@ class AsyncSimController(Controller):
         self.running: dict[int, _Run] = {}
         self.free_sites = []
         self.received = self.accepted = self.discarded = self.failed = 0
+        self.nonfinite = 0
         self.total_steps = self.total_samples = 0
         self.vtime = 0.0
         self.done = False
@@ -411,6 +412,15 @@ class AsyncSimController(Controller):
         self.total_steps += int(stats.get("steps", 0))
         self.total_samples += int(stats.get("n_samples", 0)) * self.cfg["local"]["epochs"]
         w_i = shareable_weights(res)
+        if not all(np.isfinite(v).all() for v in w_i.values() if np.issubdtype(v.dtype, np.floating)):
+            # diverged local training (NaN/Inf weights): dropped like a failed device, for every algorithm,
+            # so that one diverged device cannot destroy the global model (pilot VGG-11/CIFAR-100 FedASMU).
+            self.failed += 1
+            self.nonfinite += 1
+            row.update(accepted=False, slot_src="rejected:nonfinite", global_version=self.version,
+                       aggregations=self.aggregations)
+            self.w_upd.writerow(row)
+            return
         if self.algorithm in ASYNC_FEDASMU:
             w_i_sd = numpy_to_sd(w_i, self.gdev)
             new, info = self.server.aggregate(self.global_sd, w_i_sd, r.w_o_params, flat_params(w_i_sd, self.param_names),
@@ -483,7 +493,12 @@ class AsyncSimController(Controller):
                     continue
                 stats = r.result.get_header("stats") or {}
                 n = stats.get("n_samples", 1)
-                w = numpy_to_sd(shareable_weights(r.result), self.gdev)
+                w_np = shareable_weights(r.result)
+                if not all(np.isfinite(v).all() for v in w_np.values() if np.issubdtype(v.dtype, np.floating)):
+                    self.failed += 1
+                    self.nonfinite += 1
+                    continue
+                w = numpy_to_sd(w_np, self.gdev)
                 acc_sd = {k: n * v.float() for k, v in w.items()} if acc_sd is None else \
                     {k: acc_sd[k] + n * w[k].float() for k in w}
                 tot += n
@@ -510,7 +525,7 @@ class AsyncSimController(Controller):
         the devices become idle again (documented limitation)."""
         st = {"global_sd": {k: v.cpu() for k, v in self.global_sd.items()}, "version": self.version,
               "aggregations": self.aggregations, "received": self.received, "accepted": self.accepted,
-              "discarded": self.discarded, "failed": self.failed, "total_steps": self.total_steps,
+              "discarded": self.discarded, "failed": self.failed, "nonfinite": self.nonfinite, "total_steps": self.total_steps,
               "total_samples": self.total_samples, "vtime": self.vtime, "next_trigger": self.next_trigger,
               "rng": self.rng.getstate(), "task_counter": self.task_counter,
               "wall_elapsed": time.time() - self.wall0}
@@ -539,6 +554,7 @@ class AsyncSimController(Controller):
         for k in ("version", "aggregations", "received", "accepted", "discarded", "failed", "total_steps",
                   "total_samples", "vtime", "next_trigger", "task_counter"):
             setattr(self, k, st[k])
+        self.nonfinite = st.get("nonfinite", 0)
         self.rng.setstate(st["rng"])
         self.wall0 = time.time() - st["wall_elapsed"]
         if self.algorithm in ASYNC_FEDASMU:
@@ -595,7 +611,7 @@ class AsyncSimController(Controller):
             status = "FAILED"
         summary = {"status": status, "algorithm": self.algorithm, "received": self.received,
                    "accepted": self.accepted, "discarded": self.discarded, "failed": self.failed,
-                   "global_version": self.version, "aggregations": self.aggregations, "vtime": self.vtime,
+                   "rejected_nonfinite": self.nonfinite, "global_version": self.version, "aggregations": self.aggregations, "vtime": self.vtime,
                    "wall": time.time() - self.wall0, "total_steps": self.total_steps,
                    "total_samples": self.total_samples, "error": err}
         if self.algorithm in ASYNC_FEDASMU:
