@@ -50,3 +50,20 @@ model at each round (log `logs/step1_sanity_fedavg.log`, git-ignored):
 | 2 | 0.3720 |
 
 → Server/clients run, weights are aggregated and the global model changes.
+
+## Execution host change: gpu-host (node2), from 2026-11-05 18:20
+
+The GPUs on dev-host are shared with a long-running external job: about 6–9 GB per GPU,
+from `[path removed]`. Our VGG test run at 17:31 caused that job to crash
+with a GPU out-of-memory error. All GPU experiments therefore run on **gpu-host** (`ssh node2`,
+[address removed]). That host has the same hardware class: 2× RTX 3080 10 GB, 32 CPUs, 62 GB RAM,
+Ubuntu, driver CUDA 12.x. Its GPUs were idle when the runs started (35 MiB / 15 MiB used).
+
+* Python 3.12.8 (miniconda) → `.venv` created by `setup.sh` with the same pinned NVFLARE 2.9.0 /
+  torch 2.11.0+cu128. `pip check` passes. The CIFAR caches were copied from dev-host (identical files).
+* Code sync: dev-host is the development repo; `git push node2 main` updates the gpu-host working
+  tree (`receive.denyCurrentBranch=updateInstead`). Every run's manifest records the commit hash.
+* Results (`results/metrics`, `results/manifests`) are copied back to dev-host with rsync and
+  committed there.
+* `run_all.sh` refuses to start GPU profiles when the free GPU memory is below `MIN_FREE_MB`
+  (default 4000 MiB).
