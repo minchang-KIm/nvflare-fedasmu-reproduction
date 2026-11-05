@@ -66,3 +66,7 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 - 21:18 VGG-11+CIFAR-10 FedASMU COMPLETED (5000 updates, 88 min wall, no OOM kill): final 0.673 / best 0.681
   (paper 0.653, +2.0 pp); time to target 0.45 = 35 157 virtual s (paper 43 093 s, different time model).
   Its LSTM history was saved as results/metrics/metahist_vgg11_cifar10.json for later pre-training. Next in queue: VGG C10 FedBuff.
+- 23:14 VGG-11+CIFAR-10 FedBuff (official NVFLARE manager) COMPLETED (5000 updates / 500 aggregations, 116 min wall):
+  final 0.662 / best 0.668 (paper 0.620, +4.2 pp); time to 0.45 = 53 433 virtual s vs FedASMU 35 157 s
+  (FedASMU 34 % faster to target; paper: 43 093 vs 109 082 s). Next in queue: VGG-11+CIFAR-100 FedASMU.
+- Git: node2's checkout is written by the running queue, so pushes go to branch `node1-sync` on node2.
