@@ -140,6 +140,12 @@ class AsyncSimController(Controller):
         engine = fl_ctx.get_engine()
         engine.register_aux_message_handler(TOPIC_REQ, self._on_request)
         engine.register_aux_message_handler(TOPIC_POLL, self._on_poll)
+        if not (cfg.get("resume", True) and os.path.exists(os.path.join(self.ckpt_dir, "server_state.pkl"))):
+            # fresh start (e.g. re-run after a crash before the first checkpoint): discard partial logs
+            for name in ("updates.csv", "eval.csv"):
+                p = os.path.join(self.metrics_dir, name)
+                if os.path.exists(p):
+                    os.replace(p, p + ".discarded")
         self._open_logs()
         self.resumed = self._maybe_resume(fl_ctx)
 
