@@ -1,8 +1,13 @@
-# Paper Fig. 2 ablation on CNN + CIFAR-10
-overrides: {}
+# Paper Fig. 2 ablation on CNN + CIFAR-10.  FedASMU (full) and FedBuff come from the pilot
+# profile (identical configuration).  Meta-model pretraining is disabled so that every
+# FedASMU variant starts like the (non-pretrained) pilot FedASMU run.
+overrides: {fedasmu: {meta_pretrain: false}}
 runs:
   - {model: cnn, dataset: cifar10, algorithm: fedasmu_da}
   - {model: cnn, dataset: cifar10, algorithm: fedasmu_fa}
   - {model: cnn, dataset: cifar10, algorithm: fedasmu_0}
   - {model: cnn, dataset: cifar10, algorithm: fedavg}
   - {model: cnn, dataset: cifar10, algorithm: fedbuff_paper}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: H1, fedasmu: {fixed_slot: H1}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: H2, fedasmu: {fixed_slot: H2}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: H3, fedasmu: {fixed_slot: H3}}

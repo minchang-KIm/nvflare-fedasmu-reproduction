@@ -69,9 +69,11 @@ def build_run_config(profile, run, seed, exp_over):
     cfg["target_acc"] = ps["target"]
     cfg["paper"] = ps["paper"]
     deep_update(cfg, copy.deepcopy(exp_over))
-    deep_update(cfg, {k: v for k, v in run.items() if k not in ("model", "dataset", "algorithm")})
+    deep_update(cfg, copy.deepcopy({k: v for k, v in run.items() if k not in ("model", "dataset", "algorithm", "variant")}))
     cfg.update(model=run["model"], dataset=run["dataset"], algorithm=run["algorithm"], profile=profile)
-    cfg["run_id"] = f"{profile}_{run['model']}_{run['dataset']}_{run['algorithm']}_s{seed}"
+    algo_tag = run["algorithm"] + (f"-{run['variant']}" if run.get("variant") else "")
+    cfg["variant"] = run.get("variant")
+    cfg["run_id"] = f"{profile}_{run['model']}_{run['dataset']}_{algo_tag}_s{seed}"
     return cfg
 
 
@@ -125,7 +127,10 @@ def run_one(cfg, dry=False):
                checkpoint_dir=os.path.join(ROOT, "checkpoints", rid))
     if cfg["algorithm"].startswith("fedasmu"):
         hist = os.path.join(ROOT, "results/metrics", f"metahist_{cfg['model']}_{cfg['dataset']}.json")
-        cfg["fedasmu"]["meta_pretrain_file"] = hist
+        # paper: the LSTM meta model "is pre-trained with some historical data" -> history of the
+        # pilot FedASMU run of the same model/dataset.  Disabled (meta_pretrain: false) where runs
+        # must be comparable to the non-pretrained pilot run (ablation).
+        cfg["fedasmu"]["meta_pretrain_file"] = hist if cfg["fedasmu"].get("meta_pretrain", True) else None
     cfg_path = os.path.join(run_dir, "run_config.json")
     with open(cfg_path, "w") as f:
         json.dump(cfg, f, indent=1)

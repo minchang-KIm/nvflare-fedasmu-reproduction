@@ -47,7 +47,7 @@ def load_runs(profiles):
         up = pd.read_csv(os.path.join(d, "updates.csv")) if os.path.exists(os.path.join(d, "updates.csv")) else None
         summ = json.load(open(os.path.join(d, "server_summary.json"))) if os.path.exists(
             os.path.join(d, "server_summary.json")) else {}
-        runs.append(dict(run_id=rid, profile=prof, model=c["model"], dataset=c["dataset"], algorithm=c["algorithm"],
+        runs.append(dict(variant=c.get("variant"), run_id=rid, profile=prof, model=c["model"], dataset=c["dataset"], algorithm=c["algorithm"],
                          seed=c["seed"], cfg=c, manifest=m, status=st.get("status", "UNKNOWN"), eval=ev, upd=up,
                          summary=summ, dir=d))
     return runs
@@ -56,7 +56,7 @@ def load_runs(profiles):
 def summarize(r):
     ev, up, c = r["eval"], r["upd"], r["cfg"]
     row = dict(run_id=r["run_id"], profile=r["profile"], model=r["model"], dataset=r["dataset"],
-               algorithm=r["algorithm"], seed=r["seed"], status=r["status"], git=r["manifest"].get("git"),
+               algorithm=r["algorithm"], variant=r.get("variant"), seed=r["seed"], status=r["status"], git=r["manifest"].get("git"),
                nvflare=r["manifest"].get("nvflare"), clients=c["num_devices"], concurrency=c["max_concurrency"],
                budget_updates=c.get("budget_updates"), target=c.get("target_acc"))
     if ev is not None and len(ev):
@@ -99,8 +99,10 @@ def fig_curves(group, key, title, fname, xlabel, xcol):
         ev = r["eval"]
         if ev is None or not len(ev):
             continue
-        plt.plot(ev[xcol], ev.test_acc, label=f"{LABEL.get(r['algorithm'], r['algorithm'])} (s{r['seed']})",
-                 color=COLORS.get(r["algorithm"]), lw=1.4, alpha=0.9 if r["seed"] == 0 else 0.5)
+        v = r["cfg"].get("variant")
+        lab = LABEL.get(r["algorithm"], r["algorithm"]) + (f" [{v}]" if v else "") + f" ({r['profile']}, s{r['seed']})"
+        plt.plot(ev[xcol], ev.test_acc, label=lab, color=None if v else COLORS.get(r["algorithm"]),
+                 ls="--" if v else "-", lw=1.4, alpha=0.9 if r["seed"] == 0 else 0.5)
     tgt = group[0]["cfg"].get("target_acc")
     if tgt:
         plt.axhline(tgt, ls=":", color="k", lw=0.8, label=f"target {tgt}")
@@ -156,9 +158,20 @@ def main():
         plt.savefig(os.path.join(FIG, base + "_staleness.png"), dpi=130)
         plt.close()
 
+    # ---- ablation (paper Fig. 2): ablation runs + the identical-config pilot FedASMU/FedBuff ----
+    abl = [r for r in runs if r["profile"] == "ablation"]
+    if abl:
+        ref = [r for r in runs if r["profile"] == "pilot" and (r["model"], r["dataset"]) == (abl[0]["model"], abl[0]["dataset"])
+               and r["algorithm"] in ("fedasmu", "fedbuff") and r["seed"] == abl[0]["seed"]]
+        for xcol, xl, fn in (("vtime", "virtual time [s]", "ablation_acc_vs_vtime.png"),
+                             ("received", "received local updates", "ablation_acc_vs_updates.png")):
+            fig_curves(ref + abl, xcol, f"Ablation, {abl[0]['model'].upper()} + {abl[0]['dataset'].upper()}", fn, xl, xcol)
+        rows = [summarize(r) for r in ref + abl]
+        pd.DataFrame(rows).to_csv(os.path.join(REP, "ablation.csv"), index=False)
+
     # ---- paper vs reproduced ----
     main_algos = summ[summ.algorithm.isin(["fedasmu", "fedbuff"]) & summ.profile.isin(["pilot", "paper"])
-                      & (summ.status == "COMPLETED")]
+                      & (summ.status == "COMPLETED") & summ.variant.isna()]
     if len(main_algos):
         agg = main_algos.groupby(["profile", "model", "dataset", "algorithm"]).agg(
             final_acc=("final_acc", "mean"), final_acc_std=("final_acc", "std"), best_acc=("best_acc", "mean"),
