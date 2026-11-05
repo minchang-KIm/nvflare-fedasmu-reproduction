@@ -1,0 +1,29 @@
+# Python / env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+# data & large artifacts
+data/
+datasets_cache/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.npz
+!results/manifests/*.npz
+# runtime workspaces
+workspace/
+workspaces/
+logs/
+/tmp/
+nvflare_sim/
+*.log
+# secrets
+.env
+*.key
+*.pem
+credentials*
