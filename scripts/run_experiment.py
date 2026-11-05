@@ -24,6 +24,12 @@ import traceback
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+# glibc: serve large (model-sized) buffers with mmap so that they are returned to the OS on free.
+# Without this the dynamic mmap threshold climbs to 32 MB and VGG-sized numpy/torch buffers
+# fragment the heap: site/server RSS grew ~150 MB per 20 s and the kernel OOM-killed the server.
+os.environ.setdefault("MALLOC_MMAP_THRESHOLD_", str(1 << 20))
+os.environ.setdefault("MALLOC_TRIM_THRESHOLD_", str(1 << 20))
+os.environ.setdefault("MALLOC_ARENA_MAX", "4")
 os.environ["PYTHONPATH"] = ROOT + os.pathsep + os.environ.get("PYTHONPATH", "")
 
 import numpy as np  # noqa: E402
