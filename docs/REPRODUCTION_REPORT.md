@@ -11,7 +11,7 @@ All numbers below come from the CSV files under `results/`. Nothing was estimate
 | Runtime | NVFLARE 2.9.0 `SimEnv`. FedBuff, FedASMU, ablations and FedAvg all run on the same custom Controller/Executor. No NVFLARE core file was modified. |
 | FedBuff | The official NVFLARE aggregation (`BuffModelManager`) is used unchanged. The paper's staleness weight is available as the variant `fedbuff_paper`. |
 | FedASMU | Full algorithm: server dynamic aggregation (Eq. 1–3), device fresh-model request and merge (Eq. 7–9), Q-learning time slot (Eq. 6) and LSTM meta model (Eq. 5). |
-| Priority experiments | CNN+C10: done. VGG-11+C10: done. VGG-11+C100: FedBuff done; FedASMU **first run diverged**, re-run pending (see §5.3). |
+| Priority experiments | All 6 runs done (seed 0). The first VGG-11+C100 FedASMU run diverged; the reported number is from the re-run with the non-finite safeguard (see §5.3). |
 | Ablations | All 8 runs done (CNN+C10). The paper's ordering is **not** reproduced. The differences are within single-seed noise. |
 | Multi-seed paper profile, other models/datasets | **NOT RUN** (compute budget). |
 
@@ -21,10 +21,11 @@ Headline (seed 0, final accuracy = mean of the last 5 evaluations):
 |---|---|---|---|
 | CNN + CIFAR-10 | 0.564 / 0.364 | 0.540 / 0.603 | **−2.4 pp** / +23.9 pp |
 | VGG-11 + CIFAR-10 | 0.662 / 0.620 | 0.673 / 0.653 | **+1.1 pp** / +3.3 pp |
-| VGG-11 + CIFAR-100 | 0.265 / 0.238 | diverged (best 0.264) / 0.264 | n/a |
+| VGG-11 + CIFAR-100 | 0.265 / 0.238 | 0.292 / 0.264 (re-run) | **+2.7 pp** / +2.6 pp |
 
-- **Accuracy:** with VGG-11 on CIFAR-10, FedASMU is better than FedBuff, in the same direction as the paper but with a smaller margin. With the small CNN it is not.
-- **Speed:** FedASMU reaches the VGG-11/CIFAR-10 target 34 % sooner in simulated time. The paper reports 60 %.
+- **Accuracy:** with VGG-11, FedASMU is better than FedBuff on both datasets, in the same direction as the paper. The CIFAR-100 margin matches the paper's (+2.7 vs +2.6 pp); the CIFAR-10 margin is smaller. With the small CNN, FedASMU is not better.
+- **Speed:** FedASMU reaches the VGG-11 targets 34 % (CIFAR-10) and 35 % (CIFAR-100) sooner in simulated time. The paper reports 60 % and 50 %.
+- **Caveats:** one seed per run, so significance is unknown. The CIFAR-100 FedASMU number comes from a re-run after the first attempt diverged (§5.3).
 - **CNN gap:** the paper's large CNN gap is not reproduced. Our FedBuff reaches 0.564, not the paper's 0.364 (see §6).
 
 ## 2. Environment
@@ -97,7 +98,8 @@ Details are in `docs/ARCHITECTURE.md` and `docs/PAPER_REPRODUCTION.md`.
 | VGG-11+C10 FedBuff | FULL / ASSUMPTION-BASED | 0.662 | 0.668 | 0.620 | +4.2 pp | 53 433 (109 082) | 1 100 | 116 min |
 | VGG-11+C10 FedASMU | FULL / ASSUMPTION-BASED | 0.673 | 0.681 | 0.653 | +2.0 pp | 35 157 (43 093) | 700 | 88 min |
 | VGG-11+C100 FedBuff | FULL / ASSUMPTION-BASED | 0.265 | 0.268 | 0.238 | +2.7 pp | 99 668 (167 053) | 2 050 | 116 min |
-| VGG-11+C100 FedASMU | **FAILED** (diverged); re-run pending | 0.010 | 0.264 | 0.264 | – | 65 034 (83 226) | – | 72 min |
+| VGG-11+C100 FedASMU (re-run) | FULL / ASSUMPTION-BASED (1 update rejected as non-finite) | 0.292 | 0.300 | 0.264 | +2.8 pp | 64 978 (83 226) | 1 300 | 88 min |
+| VGG-11+C100 FedASMU (1st run) | FAILED (diverged at update 2 990) | 0.010 | 0.264 | 0.264 | – | 65 034 (83 226) | – | 72 min |
 
 - **Status labels:** "FULL" means the complete algorithm at the full budget. "ASSUMPTION-BASED" means the result depends on the unpublished settings in §4.
 - **Virtual times:** the absolute values are not comparable with the paper, because the paper's time model is unpublished. Only the ratio between the two algorithms on the same simulated system is meaningful.
@@ -124,7 +126,7 @@ Figures:
 - **λ, σ, ι barely move.** With the paper's learning rates (1e-3 or 1e-4) and our gradient scale, they stay almost fixed. The "dynamic" aggregation therefore behaves almost like a static staleness polynomial. That is consistent with FedASMU-DA performing the same as FedASMU (§5.4).
 - **The reward is small.** Its mean is +0.006 on CNN and +0.021 on VGG. Merging the fresh model helps only marginally on average.
 
-### 5.3 VGG-11 + CIFAR-100 FedASMU: divergence (FAILED, re-run pending)
+### 5.3 VGG-11 + CIFAR-100 FedASMU: first run diverged, re-run completed
 
 What happened:
 - Accuracy rose to 0.264 at about 2 900 updates, which equals the paper's 0.264.
@@ -141,7 +143,18 @@ What is unresolved:
 - The underlying instability (no-BN VGG-11, lr 0.03, 100 classes) was **not** changed. Changing it would be tuning.
 - The VGG-11/CIFAR-10 FedASMU curve also shows a single sharp dip, from 0.65 to 0.41 at about 135 000 virtual s, which it recovered from. So instability can occur with this configuration.
 
-*Re-run result: see §5.3a (to be filled when the run finishes).*
+**Re-run** (2026-11-06 06:31–08:00, same seed and config, plus the safeguard; `results/metrics/pilot_vgg11_cifar100_fedasmu_s0/`):
+- COMPLETED: 5000 received, 4999 aggregated.
+- At update 2 375 the safeguard rejected one update with non-finite weights (device 25). That update was dropped, and training continued.
+- Final accuracy 0.292, best 0.300, against the paper's 0.264 and our FedBuff's 0.265.
+- Time to the 0.12 target: 64 978 virtual s. FedBuff took 99 668 s.
+- The test loss still rises strongly, from 3.31 at about 1 900 updates to 5.5 at the end, while accuracy keeps improving. The model becomes over-confident without collapsing.
+
+Determinism:
+- The re-run's trajectory differs from the first run's from the first evaluations on, although the seed is the same.
+- The runs are not bitwise reproducible: GPU kernels are non-deterministic, and the wall-clock order in which sites pick up tasks varies.
+- The data split, initial weights, device profiles and virtual-time schedule are identical between the two runs.
+- Whether a given seed diverges is therefore partly chance. Without the safeguard, the re-run would very likely also have been destroyed by the update at 2 375.
 
 ### 5.4 Ablation (CNN + CIFAR-10, seed 0; `results/reports/ablation.csv`, `results/figures/ablation_*.png`)
 
@@ -179,16 +192,16 @@ FedASMU with requests is slower in wall-clock on CNN because devices wait in rea
    - Our FedBuff uses the official NVFLARE aggregation with K = 10 and η_g = 1. We did no tuning in its favour.
    - Possible causes, none of which can be checked from the paper: a different K, server lr or momentum in the paper's FedBuff; their training budget unit; their time model.
    - The reversal of the FedASMU/FedBuff order on CNN is therefore the main **non-reproduced** result.
-2. **On VGG-11+C10 the paper's direction is reproduced.**
-   - FedASMU is +1.1 pp better (paper: +3.3 pp).
-   - It is 34 % faster in virtual time to 0.45 (paper: 60 %).
+2. **On VGG-11 the paper's direction is reproduced on both datasets.**
+   - CIFAR-10: FedASMU is +1.1 pp better (paper: +3.3 pp) and 34 % faster in virtual time to 0.45 (paper: 60 %).
+   - CIFAR-100: FedASMU is +2.7 pp better (paper: +2.6 pp) and 35 % faster to 0.12 (paper: 50 %). This is from the re-run, after one rejected NaN update.
    - Single seed, so the significance is unknown.
 3. **The dynamic parts of FedASMU are weak in this setting.**
    - With the published η values, λ, σ and ι change by less than 0.1 %, and the mean reward of merging is around +0.01.
    - Most of FedASMU's behaviour is therefore its staleness-polynomial weighting (α ≈ 0.19 on average) plus fresh-model merging with β ≈ 0.15.
    - This matches the ablation result that the variants are indistinguishable.
 4. **Stability.** FedASMU applies every update immediately, with α up to about 0.9 early on, so a single bad update has a large effect.
-   - Together with a no-BN VGG-11 at lr 0.03, this produced one divergence (C100) and one large transient dip (C10).
+   - Together with a no-BN VGG-11 at lr 0.03, this produced NaN updates in both C100 attempts (one destroyed the first run) and one large transient dip (C10).
    - FedBuff averages 10 updates before applying them, and neither of its VGG runs showed this.
 5. **Assumptions that could change the numbers.**
    - Unknown in the paper: α_Dirichlet, local epochs and batch size, initial control parameters, µ, time and bandwidth model, and how "final accuracy" is measured.
@@ -202,7 +215,7 @@ FedASMU with requests is slower in wall-clock on CNN because devices wait in rea
 | CNN+C10 FedBuff / FedASMU | FULL (seed 0) |
 | VGG-11+C10 FedBuff / FedASMU | FULL (seed 0) |
 | VGG-11+C100 FedBuff | FULL (seed 0) |
-| VGG-11+C100 FedASMU | FAILED (diverged); re-run in progress |
+| VGG-11+C100 FedASMU | FULL (re-run, seed 0); first attempt FAILED (diverged), archived |
 | Ablations DA / FA / 0 / FedAvg / FedBuff-paper / H1–H3 (CNN+C10) | ABLATION, done (seed 0) |
 | Seeds 1, 2 for all of the above (`paper` profile) | NOT RUN |
 | CNN+C100, LeNet-5 C10/C100, ResNet-20 C100, AlexNet C10/C100 | NOT RUN (models implemented and configured) |
