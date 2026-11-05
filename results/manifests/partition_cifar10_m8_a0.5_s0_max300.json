@@ -1,0 +1,18 @@
+{
+ "dataset": "cifar10",
+ "num_devices": 8,
+ "alpha": 0.5,
+ "seed": 0,
+ "max_samples_per_device": 300,
+ "sha256": "e669a63d4463c53e6c41c8ab3c77824c8598057653fc958767c7b22be004a75a",
+ "sizes": [
+  300,
+  300,
+  300,
+  300,
+  300,
+  300,
+  300,
+  300
+ ]
+}

@@ -27,3 +27,9 @@ nvflare_sim/
 *.key
 *.pem
 credentials*
+# timing / integration-test scratch runs and discarded partial logs
+results/metrics/*-timing_*/
+results/metrics/*-itest*/
+results/metrics/*.discarded
+results/metrics/*/*.discarded
+results/metrics/*/meta_history.json
