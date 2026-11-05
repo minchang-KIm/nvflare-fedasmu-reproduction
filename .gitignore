@@ -33,3 +33,5 @@ results/metrics/*-itest*/
 results/metrics/*.discarded
 results/metrics/*/*.discarded
 results/metrics/*/meta_history.json
+logs_*.out
+queue.sh

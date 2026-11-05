@@ -54,3 +54,12 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 - Smoke profile re-run on gpu-host (CPU): fedbuff, fedbuff_paper, fedasmu and fedavg all COMPLETED.
 
 ## Step 7 — pilot runs — IN PROGRESS (started 2026-11-05 ~18:45 on gpu-host)
+- CNN+CIFAR-10 pilot pair COMPLETED (5000 updates each): FedASMU final 0.540 / best 0.565; FedBuff final 0.564 / best 0.572.
+- Errors fixed (19:10–19:50):
+  1. Running two streams in parallel → kernel OOM-killed both VGG FedBuff servers (RAM). Decision: one run at a time.
+  2. A single VGG run was still OOM-killed (FedASMU VGG-C10 at 700 updates). Cause: the RSS of all processes grew
+     linearly (~150 MB per 20 s) through glibc heap fragmentation from model-sized buffers. Fix: MALLOC_MMAP_THRESHOLD_ = 1 MiB,
+     MALLOC_TRIM_THRESHOLD_ = 1 MiB, MALLOC_ARENA_MAX = 4 (scripts/run_experiment.py). Verified: total site RSS flat at
+     ≈16 GB and the server oscillates 4–7 GB over 370 updates.
+  3. A crashed run restarted without a checkpoint appended to its old CSV → partial logs are now moved aside.
+- The failed VGG runs were deleted and are re-run from scratch by `scripts/queue_node2.sh` (sequential queue).
