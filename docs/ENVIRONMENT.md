@@ -53,11 +53,10 @@ model at each round (log `logs/step1_sanity_fedavg.log`, git-ignored):
 
 ## Execution host change: gpu-host (node2), from 2026-11-05 18:20
 
-The GPUs on dev-host are shared with a long-running external job: about 6–9 GB per GPU,
-from `[path removed]`. Our VGG test run at 17:31 caused that job to crash
-with a GPU out-of-memory error. All GPU experiments therefore run on **gpu-host** (`ssh node2`,
-[address removed]). That host has the same hardware class: 2× RTX 3080 10 GB, 32 CPUs, 62 GB RAM,
-Ubuntu, driver CUDA 12.x. Its GPUs were idle when the runs started (35 MiB / 15 MiB used).
+The GPUs on dev-host are shared with another long-running GPU job (about 6–9 GB per GPU), and a
+VGG test run on that host ran out of GPU memory. All GPU experiments therefore run on a second
+machine, **gpu-host** (`ssh node2`). It has the same hardware class: 2× RTX 3080 10 GB, 32 CPUs,
+62 GB RAM, Ubuntu, driver CUDA 12.x. Its GPUs were idle when the runs started.
 
 * Python 3.12.8 (miniconda) → `.venv` created by `setup.sh` with the same pinned NVFLARE 2.9.0 /
   torch 2.11.0+cu128. `pip check` passes. The CIFAR caches were copied from dev-host (identical files).
