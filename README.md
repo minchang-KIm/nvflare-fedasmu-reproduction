@@ -62,7 +62,7 @@ bash run_all.sh --profile paper       # all CIFAR combos x 3 seeds (not executed
 | `src/models/`, `src/datasets/`, `src/scheduling/` | Models (CNN, VGG-11, LeNet-5, ResNet-20, AlexNet), Dirichlet partitioning, device heterogeneity |
 | `configs/` | Common settings, per-task paper hyper-parameters, experiment profiles |
 | `scripts/run_experiment.py`, `run_all.sh`, `report.py` | Experiment runner, profiles, report generation |
-| `tests/` | 32 unit tests and 3 NVFLARE integration tests |
+| `tests/` | 38 unit tests and 3 NVFLARE integration tests |
 | `results/` | Per-run metrics (CSV), manifests, summary tables, figures |
 | `docs/` | Report, architecture, paper settings, environment, progress log |
 

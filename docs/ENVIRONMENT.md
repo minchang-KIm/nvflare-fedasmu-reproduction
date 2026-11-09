@@ -35,7 +35,7 @@
 The SSH key works, but the remote repository `git@github.com:minchang-KIm/nvflare-fedasmu-reproduction.git`
 does not exist and cannot be created here (no `gh`, no API token). `origin` is configured
 to that URL; every step attempts `git push` and records the actual outcome in PROGRESS.md.
-To enable sync, create an empty private repo with that name and run `git push -u origin main`.
+To enable sync, create an empty public repo with that name and run `git push -u origin main`.
 
 ## Step-1 sanity run (official FedAvgRecipe + SimEnv + Client API)
 

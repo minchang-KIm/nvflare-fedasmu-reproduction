@@ -170,7 +170,7 @@ def main():
         pd.DataFrame(rows).to_csv(os.path.join(REP, "ablation.csv"), index=False)
 
     # ---- paper vs reproduced ----
-    main_algos = summ[summ.algorithm.isin(["fedasmu", "fedbuff"]) & summ.profile.isin(["pilot", "paper"])
+    main_algos = summ[summ.algorithm.isin(["fedasmu", "fedbuff"]) & summ.profile.isin(["pilot", "extended", "paper"])
                       & (summ.status == "COMPLETED") & summ.variant.isna()]
     if len(main_algos):
         agg = main_algos.groupby(["profile", "model", "dataset", "algorithm"]).agg(

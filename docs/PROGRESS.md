@@ -117,3 +117,15 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 - Added: datasets FMNIST, Tiny-ImageNet (val split as test), IMDb (Hugging Face parquet exports), model TextCNN, and the paper's Table 1/2/5/6 values for the three new combinations.
 - Assumptions for the new parts: IMDb vocabulary 20 000 (train split only), length 400, TextCNN embedding 100 and 100 filters of width 3/4/5; trainable random embedding; base epoch time 10 s (LeNet, TextCNN), 30 s (ResNet-20).
 - Tests: 38 unit + 3 integration passed. CPU functional checks of the new runs: FMNIST and IMDb completed (24 updates); Tiny-ImageNet reached 16/24 updates and was stopped by the time limit (CPU only, no error).
+- Status 2026-11-09 14:25 KST: 6 of 18 runs COMPLETED (CNN-C100, LeNet-C10, LeNet-C100 × {FedASMU, FedBuff}); AlexNet-C10 FedASMU running; 11 runs queued. No non-finite update was rejected in the 6 completed runs.
+- Completed so far, final accuracy (mean of the last 5 evals), reproduced / paper:
+
+| Run | FedBuff | FedASMU |
+|---|---|---|
+| CNN + CIFAR-100 | 0.267 / 0.201 | 0.257 / 0.277 |
+| LeNet-5 + CIFAR-10 | 0.541 / 0.365 | 0.445 / 0.486 |
+| LeNet-5 + CIFAR-100 | 0.223 / 0.174 | 0.203 / 0.182 |
+
+- Observation: FedASMU is below FedBuff on all three, by 1.0 to 9.7 pp. LeNet-5 + CIFAR-10 FedASMU fluctuates between evaluations (0.386–0.497 over the last 11 evals) and ended below its best value (0.5145).
+- Fixed: `report.py` left the `extended` profile out of `paper_comparison.csv` and the paper-vs-reproduced figures.
+- Push to GitHub origin: FAILED ("Repository not found"; the repository still does not exist). Synced to node2 branch `node1-sync`.
