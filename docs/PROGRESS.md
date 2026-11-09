@@ -111,3 +111,9 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 | run_all.sh smoke/pilot/paper, setup.sh, report.py, checkpoint/resume | done |
 | Multi-seed paper profile, other model/dataset combos | NOT RUN |
 | Push to GitHub origin | FAILED every step: the repository does not exist and there is no token to create it. Synced to node2 (branches main and node1-sync) instead. |
+
+## Step 9 — remaining paper combinations — IN PROGRESS (started 2026-11-09 on gpu-host)
+- Profile `extended` (seed 0, same conditions as the pilot): CNN-C100, LeNet-C10/C100, AlexNet-C10/C100, ResNet-20-C100 × {FedASMU, FedBuff}, then LeNet-FMNIST, TextCNN-IMDb, ResNet-20-Tiny-ImageNet.
+- Added: datasets FMNIST, Tiny-ImageNet (val split as test), IMDb (Hugging Face parquet exports), model TextCNN, and the paper's Table 1/2/5/6 values for the three new combinations.
+- Assumptions for the new parts: IMDb vocabulary 20 000 (train split only), length 400, TextCNN embedding 100 and 100 filters of width 3/4/5; trainable random embedding; base epoch time 10 s (LeNet, TextCNN), 30 s (ResNet-20).
+- Tests: 38 unit + 3 integration passed. CPU functional checks of the new runs: FMNIST and IMDb completed (24 updates); Tiny-ImageNet reached 16/24 updates and was stopped by the time limit (CPU only, no error).

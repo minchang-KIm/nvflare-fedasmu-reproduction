@@ -36,7 +36,7 @@ import numpy as np  # noqa: E402
 import torch  # noqa: E402
 import yaml  # noqa: E402
 
-from src.datasets.cifar import load_tensor_dataset  # noqa: E402
+from src.datasets.cifar import NUM_CLASSES, load_tensor_dataset  # noqa: E402
 from src.datasets.partition import dirichlet_partition, save_partition  # noqa: E402
 from src.models import build_model  # noqa: E402
 from src.nvflare_integration.common import sd_digest  # noqa: E402
@@ -102,8 +102,7 @@ def shared_artifacts(cfg):
     if not os.path.exists(ifile):
         os.makedirs(os.path.dirname(ifile), exist_ok=True)
         torch.manual_seed(cfg["seed"])
-        ncls = 100 if cfg["dataset"] == "cifar100" else 10
-        sd = build_model(cfg["model"], ncls).state_dict()
+        sd = build_model(cfg["model"], NUM_CLASSES[cfg["dataset"]], cfg["dataset"]).state_dict()
         torch.save(sd, ifile)
         with open(os.path.join(ROOT, "results/manifests", f"init_{cfg['model']}_{cfg['dataset']}_s{cfg['seed']}.json"), "w") as f:
             json.dump({"sha256": sd_digest(sd), "num_params": int(sum(v.numel() for v in sd.values()))}, f)

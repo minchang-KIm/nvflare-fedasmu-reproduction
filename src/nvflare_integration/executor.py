@@ -57,7 +57,7 @@ class DeviceSimExecutor(Executor):
         self.x, self.y = x, y
         self.parts = load_partition(cfg["partition_file"])
         self.norm = Normalizer(cfg["dataset"], self.dev)
-        self.model = build_model(cfg["model"], ncls).to(self.dev)
+        self.model = build_model(cfg["model"], ncls, cfg["dataset"]).to(self.dev)
         self.store = os.path.join(cfg["run_dir"], "device_store")
         os.makedirs(self.store, exist_ok=True)
         f = cfg.get("fedasmu", {})

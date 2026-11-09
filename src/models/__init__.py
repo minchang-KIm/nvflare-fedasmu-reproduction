@@ -9,6 +9,7 @@
 * ``lenet5``  : LeCun-style LeNet-5 (conv6-pool-conv16-pool-fc120-fc84-fc).
 * ``resnet20``: He et al. 2016 CIFAR ResNet-20 (3x3 stages 16/32/64, BN).
 * ``alexnet`` : CIFAR-sized AlexNet variant (5 conv + 3 fc).
+* ``textcnn`` : Kim-2014 style TextCNN (trainable embedding, filters of width 3/4/5).
 Only ``cnn`` is fully specified by the paper; the others follow the cited
 standard architectures (documented in docs/PAPER_REPRODUCTION.md).
 """
@@ -128,8 +129,28 @@ class AlexNetCifar(nn.Module):
         return self.classifier(torch.flatten(self.features(x), 1))
 
 
-MODELS = {"cnn": PaperCNN, "vgg11": VGG11, "lenet5": LeNet5, "resnet20": ResNet20, "alexnet": AlexNetCifar}
+class TextCNN(nn.Module):
+    """Embedding 100, 100 filters each of width 3/4/5, max pooling, dropout 0.5 (sizes assumed)."""
+
+    def __init__(self, num_classes=2, vocab_size=20002, embed_dim=100, filters=100, widths=(3, 4, 5)):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
+        self.convs = nn.ModuleList(nn.Conv1d(embed_dim, filters, w) for w in widths)
+        self.dropout = nn.Dropout(0.5)
+        self.fc = nn.Linear(filters * len(widths), num_classes)
+
+    def forward(self, x):
+        e = self.embedding(x).transpose(1, 2)
+        pooled = [F.relu(c(e)).max(dim=2).values for c in self.convs]
+        return self.fc(self.dropout(torch.cat(pooled, dim=1)))
 
 
-def build_model(name: str, num_classes: int) -> nn.Module:
-    return MODELS[name.lower()](num_classes=num_classes)
+MODELS = {"cnn": PaperCNN, "vgg11": VGG11, "lenet5": LeNet5, "resnet20": ResNet20, "alexnet": AlexNetCifar,
+          "textcnn": TextCNN}
+# Constructor arguments for inputs that differ from 3x32x32
+DATASET_KWARGS = {("lenet5", "fmnist"): {"in_ch": 1, "img": 28}}
+
+
+def build_model(name: str, num_classes: int, dataset: str = None) -> nn.Module:
+    kwargs = DATASET_KWARGS.get((name.lower(), (dataset or "").lower()), {})
+    return MODELS[name.lower()](num_classes=num_classes, **kwargs)

@@ -14,3 +14,10 @@ runs:
   - {model: alexnet, dataset: cifar100, algorithm: fedbuff}
   - {model: resnet20, dataset: cifar100, algorithm: fedasmu}
   - {model: resnet20, dataset: cifar100, algorithm: fedbuff}
+  # Datasets added afterwards
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu}
+  - {model: lenet5, dataset: fmnist, algorithm: fedbuff}
+  - {model: textcnn, dataset: imdb, algorithm: fedasmu}
+  - {model: textcnn, dataset: imdb, algorithm: fedbuff}
+  - {model: resnet20, dataset: tinyimagenet, algorithm: fedasmu}
+  - {model: resnet20, dataset: tinyimagenet, algorithm: fedbuff}

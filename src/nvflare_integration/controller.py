@@ -86,7 +86,7 @@ class AsyncSimController(Controller):
         _, _, xt, yt, ncls = load_tensor_dataset(cfg["dataset"])
         self.xt, self.yt = xt.to(self.gdev), yt.to(self.gdev)
         self.norm = Normalizer(cfg["dataset"], self.gdev)
-        self.model = build_model(cfg["model"], ncls).to(self.gdev)
+        self.model = build_model(cfg["model"], ncls, cfg["dataset"]).to(self.gdev)
         self.param_names = [n for n, _ in self.model.named_parameters()]
         init = torch.load(cfg["init_weights"], map_location=self.gdev)
         self.global_sd = {k: v.to(self.gdev) for k, v in init.items()}

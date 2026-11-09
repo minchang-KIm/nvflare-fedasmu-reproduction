@@ -14,7 +14,7 @@ from src.datasets.cifar import DATA_ROOT, load_tensor_dataset  # noqa: E402
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--datasets", nargs="+", default=["cifar10", "cifar100"])
+    ap.add_argument("--datasets", nargs="+", default=["cifar10", "cifar100", "fmnist", "tinyimagenet", "imdb"])
     args = ap.parse_args()
     os.makedirs(DATA_ROOT, exist_ok=True)
     for name in args.datasets:

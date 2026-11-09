@@ -118,7 +118,7 @@ def fig_curves(group, key, title, fname, xlabel, xcol):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--profiles", nargs="*", default=["pilot", "paper", "ablation", "smoke"])
+    ap.add_argument("--profiles", nargs="*", default=["pilot", "extended", "paper", "ablation", "smoke"])
     args = ap.parse_args()
     os.makedirs(REP, exist_ok=True)
     os.makedirs(FIG, exist_ok=True)
