@@ -1,0 +1,16 @@
+# Remaining paper combinations (seed 0), same conditions as the pilot profile
+overrides: {}
+seeds: [0]
+runs:
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu}
+  - {model: cnn, dataset: cifar100, algorithm: fedbuff}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu}
+  - {model: lenet5, dataset: cifar10, algorithm: fedbuff}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu}
+  - {model: lenet5, dataset: cifar100, algorithm: fedbuff}
+  - {model: alexnet, dataset: cifar10, algorithm: fedasmu}
+  - {model: alexnet, dataset: cifar10, algorithm: fedbuff}
+  - {model: alexnet, dataset: cifar100, algorithm: fedasmu}
+  - {model: alexnet, dataset: cifar100, algorithm: fedbuff}
+  - {model: resnet20, dataset: cifar100, algorithm: fedasmu}
+  - {model: resnet20, dataset: cifar100, algorithm: fedbuff}
