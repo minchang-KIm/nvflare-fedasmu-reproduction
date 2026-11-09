@@ -36,3 +36,5 @@ results/metrics/*/meta_history.json
 logs_*.out
 queue.sh
 queue2.sh
+queue4.sh
+queue3.sh
