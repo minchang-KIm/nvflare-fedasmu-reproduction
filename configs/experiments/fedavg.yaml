@@ -1,0 +1,6 @@
+# FedAvg reference for the pilot VGG-11 runs (same seed, partition, initial weights and device
+# profiles as pilot FedBuff/FedASMU). Synchronous rounds of m' = 10 devices, 5000 local updates.
+overrides: {}
+runs:
+  - {model: vgg11, dataset: cifar10, algorithm: fedavg}
+  - {model: vgg11, dataset: cifar100, algorithm: fedavg}
