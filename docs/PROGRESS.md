@@ -130,3 +130,17 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 - Fixed: `report.py` left the `extended` profile out of `paper_comparison.csv` and the paper-vs-reproduced figures.
 - Push to GitHub origin: FAILED ("Repository not found"; the repository still does not exist). Synced to node2 branch `node1-sync`.
 - GitHub publication, 2026-11-09: the public repository now exists and the push SUCCEEDED (public `main` at b11377c, no force push). At the owner's request the public history is a sanitized rewrite: host addresses, host names, local paths and the personal e-mail address are replaced in every commit. All 27 commits are kept, but their hashes differ from those of the development repository, so commit hashes in this log and in run manifests refer to the development repository. No licence file is included, at the owner's request.
+- 2026-11-10: all 18 extended runs COMPLETED on gpu node (no non-finite update rejected); metrics copied back. Report docs still to be updated for them.
+
+## Step 10 — FedAvg reference for the VGG-11 pilot runs — DONE (2026-11-10)
+- Profile `fedavg` (seed 0, same partition, initial weights and device profiles as the pilot): VGG-11 + CIFAR-10 on the GPU host, VGG-11 + CIFAR-100 on the development host (its GPUs were idle). Both COMPLETED, about 55 min wall each.
+- First start on the development host launched the CIFAR-100 run twice by mistake; both copies were stopped, their files deleted, and the run restarted once from scratch.
+- Results (final = mean of last 5 evals; virtual seconds):
+
+| Run | final acc | time to target | total virtual time (5000 updates) | acc at the virtual time FedBuff needed for 5000 updates |
+|---|---|---|---|---|
+| VGG-11 + CIFAR-10 FedAvg | 0.682 | 32,335 | 365,384 | 0.674 (3300 updates) |
+| VGG-11 + CIFAR-100 FedAvg | 0.280 | 57,368 | 365,468 | 0.276 (3300 updates) |
+
+- CIFAR-100 FedAvg: the server dropped 4 non-finite local updates (`rejected_nonfinite: 4`).
+- `report.py` now includes FedAvg in `paper_comparison.csv` (no paper value for these combinations).
