@@ -258,10 +258,12 @@ def figure(path, acc, m, q, mt, cfg):
         qq = q.copy()
         qq["bin"] = pd.cut(qq.received, 10)
         sh = qq.groupby("bin", observed=True).request_after.value_counts(normalize=True).unstack().fillna(0)
+        sh.columns = [f"l*={int(c)}" for c in sh.columns]
+        sh.index = [f"{int(b.right)}" for b in sh.index]
         sh.plot.area(ax=a, legend=True)
         a.set_xticks(range(len(sh)))
-        a.set_xticklabels([f"{int(b.right)}" for b in sh.index], fontsize=6, rotation=45)
-        a.legend([f"l*={int(c)}" for c in sh.columns], fontsize=7)
+        a.set_xticklabels(sh.index, fontsize=6, rotation=45)
+        a.legend(fontsize=7, loc="lower left")
     a.set_xlabel("received updates (bin end)")
     a.set_title(f"Q-learning request slot share (L={L})")
     a = ax[1, 2]
