@@ -9,4 +9,4 @@ vgg11-cifar10: FedASMU: not started; FedAvg: not started; FedBuff: not started
 textcnn-imdb: FedASMU: not started; FedAvg: not started; FedBuff: not started
 alexnet-cifar100: FedASMU: not started; FedAvg: not started; FedBuff: not started
 vgg11-cifar100: FedASMU: not started; FedAvg: not started; FedBuff: not started
-lenet5-fmnist: FedASMU: RUNNING; FedAvg: not started; FedBuff: not started
+lenet5-fmnist: FedASMU: COMPLETED; FedAvg: not started; FedBuff: RUNNING
