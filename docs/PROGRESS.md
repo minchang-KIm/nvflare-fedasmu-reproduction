@@ -144,3 +144,10 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 
 - CIFAR-100 FedAvg: the server dropped 4 non-finite local updates (`rejected_nonfinite: 4`).
 - `report.py` now includes FedAvg in `paper_comparison.csv` (no paper value for these combinations).
+
+## Step 11 — verification trace and paper-appendix figures — IN PROGRESS (started 2026-11-12)
+- Why: there is no official FedASMU code, so "implemented as in the paper" cannot be shown by comparing with the authors' code. Instead every run now logs the inputs and outputs of each FedASMU formula (`trace.csv`), and `scripts/verify_fedasmu.py` recomputes every formula from those inputs with separate code. It also measures Eq. 1 and Formula 7 on the real model tensors: the ratio |w_new − w_old| / |w_upload − w_old| must equal α (or β).
+- Checks: S1–S8 (server: staleness, Eq. 1–3, per-device state), D1–D9 (device: request, Formula 7–9, reward), Q1–Q3 (Eq. 6), M1–M4 (LSTM, Eq. 5), B1–B2 (FedBuff aggregation every K = 10).
+- CPU check runs (`smoke_trace_*`, 60 updates): FedASMU 24/24 checks passed, FedBuff 2/2 passed. Tests: 38 unit + 3 integration passed.
+- Profile `appendix`: 12 workloads × {FedASMU, FedBuff, FedAvg}, seed 0, paper budgets. The LSTM is pre-trained on the request history of the earlier FedASMU run of the same workload. Two queues run at the same time, one on each host, one run at a time per host; the development-host queue waits whenever any GPU has less than 8000 MiB free.
+- `scripts/live_sync.sh` redraws `results/figures/appendix/*.png` every 5 min (paper appendix Fig. 3–6 layout) and verifies runs as they complete. Every 60 min, and whenever a run completes, it commits, pushes to node2 and publishes the sanitized history to GitHub. Each sync is recorded in `logs/live_sync.log`.
