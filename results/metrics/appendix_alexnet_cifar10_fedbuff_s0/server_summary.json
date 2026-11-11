@@ -1,0 +1,16 @@
+{
+ "status": "COMPLETED",
+ "algorithm": "fedbuff",
+ "received": 5000,
+ "accepted": 5000,
+ "discarded": 0,
+ "failed": 0,
+ "rejected_nonfinite": 0,
+ "global_version": 500,
+ "aggregations": 500,
+ "vtime": 265568.9263920804,
+ "wall": 6714.002748966217,
+ "total_steps": 262840,
+ "total_samples": 12476535,
+ "error": null
+}
