@@ -1,0 +1,16 @@
+{
+ "status": "COMPLETED",
+ "algorithm": "fedavg",
+ "received": 5000,
+ "accepted": 500,
+ "discarded": 0,
+ "failed": 0,
+ "rejected_nonfinite": 0,
+ "global_version": 500,
+ "aggregations": 500,
+ "vtime": 119898.03315088562,
+ "wall": 1126.203064441681,
+ "total_steps": 262045,
+ "total_samples": 12440305,
+ "error": null
+}
