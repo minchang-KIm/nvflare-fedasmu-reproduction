@@ -1,0 +1,3 @@
+received,accepted,global_version,aggregations,vtime,wall,test_acc,test_loss,total_steps,total_samples,running
+0,0,0,0,0.0,1.92,0.0922,2.3089874328613282,0,0,0
+50,5,5,5,1239.265,17.04,0.386,1.7178866027832032,2555,121080,0

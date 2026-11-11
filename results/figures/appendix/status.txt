@@ -1,5 +1,5 @@
-lenet5-cifar10: FedASMU: COMPLETED; FedAvg: not started; FedBuff: RUNNING
-cnn-cifar10: FedASMU: COMPLETED; FedAvg: not started; FedBuff: RUNNING
+lenet5-cifar10: FedASMU: COMPLETED; FedAvg: RUNNING; FedBuff: COMPLETED
+cnn-cifar10: FedASMU: COMPLETED; FedAvg: RUNNING; FedBuff: COMPLETED
 resnet20-tinyimagenet: FedASMU: not started; FedAvg: not started; FedBuff: not started
 lenet5-cifar100: FedASMU: not started; FedAvg: not started; FedBuff: not started
 cnn-cifar100: FedASMU: not started; FedAvg: not started; FedBuff: not started
