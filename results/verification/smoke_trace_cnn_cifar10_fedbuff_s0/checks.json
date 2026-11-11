@@ -1,0 +1,29 @@
+{
+ "run_id": "smoke_trace_cnn_cifar10_fedbuff_s0",
+ "algorithm": "fedbuff",
+ "run_status": "COMPLETED",
+ "rows": 60,
+ "all_passed": true,
+ "checks": [
+  {
+   "id": "B1",
+   "what": "NVFLARE BuffModelManager makes a new global model after every K = 10 updates",
+   "source": "FedBuff Alg. 1",
+   "n": 60,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "6 new global models from 60 updates"
+  },
+  {
+   "id": "B2",
+   "what": "model version increases by exactly 1 per aggregation",
+   "source": "FedBuff Alg. 1",
+   "n": 60,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": ""
+  }
+ ]
+}

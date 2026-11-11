@@ -1,0 +1,45 @@
+# Paper appendix Figures 3-6: accuracy vs time for every workload of Tables 1-2, with the
+# methods implemented here (FedASMU, FedBuff on NVFLARE's BuffModelManager, FedAvg).
+# Paper settings (configs/common/paper_settings.yaml), seed 0, budgets of the paper
+# (5000 local updates for asynchronous methods, 500 rounds for FedAvg).  The LSTM meta model
+# is pre-trained with the request history of an earlier FedASMU run of the same workload
+# (results/metrics/metahist_<model>_<dataset>.json), as the paper pre-trains it "with some
+# historical data".  Every run writes trace.csv for scripts/verify_fedasmu.py.
+overrides: {trace: true}
+runs:
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu}
+  - {model: lenet5, dataset: cifar10, algorithm: fedbuff}
+  - {model: lenet5, dataset: cifar10, algorithm: fedavg}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu}
+  - {model: cnn, dataset: cifar10, algorithm: fedbuff}
+  - {model: cnn, dataset: cifar10, algorithm: fedavg}
+  - {model: resnet20, dataset: tinyimagenet, algorithm: fedasmu}
+  - {model: resnet20, dataset: tinyimagenet, algorithm: fedbuff}
+  - {model: resnet20, dataset: tinyimagenet, algorithm: fedavg}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu}
+  - {model: lenet5, dataset: cifar100, algorithm: fedbuff}
+  - {model: lenet5, dataset: cifar100, algorithm: fedavg}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu}
+  - {model: cnn, dataset: cifar100, algorithm: fedbuff}
+  - {model: cnn, dataset: cifar100, algorithm: fedavg}
+  - {model: resnet20, dataset: cifar100, algorithm: fedasmu}
+  - {model: resnet20, dataset: cifar100, algorithm: fedbuff}
+  - {model: resnet20, dataset: cifar100, algorithm: fedavg}
+  - {model: alexnet, dataset: cifar10, algorithm: fedasmu}
+  - {model: alexnet, dataset: cifar10, algorithm: fedbuff}
+  - {model: alexnet, dataset: cifar10, algorithm: fedavg}
+  - {model: vgg11, dataset: cifar10, algorithm: fedasmu}
+  - {model: vgg11, dataset: cifar10, algorithm: fedbuff}
+  - {model: vgg11, dataset: cifar10, algorithm: fedavg}
+  - {model: textcnn, dataset: imdb, algorithm: fedasmu}
+  - {model: textcnn, dataset: imdb, algorithm: fedbuff}
+  - {model: textcnn, dataset: imdb, algorithm: fedavg}
+  - {model: alexnet, dataset: cifar100, algorithm: fedasmu}
+  - {model: alexnet, dataset: cifar100, algorithm: fedbuff}
+  - {model: alexnet, dataset: cifar100, algorithm: fedavg}
+  - {model: vgg11, dataset: cifar100, algorithm: fedasmu}
+  - {model: vgg11, dataset: cifar100, algorithm: fedbuff}
+  - {model: vgg11, dataset: cifar100, algorithm: fedavg}
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu}
+  - {model: lenet5, dataset: fmnist, algorithm: fedbuff}
+  - {model: lenet5, dataset: fmnist, algorithm: fedavg}

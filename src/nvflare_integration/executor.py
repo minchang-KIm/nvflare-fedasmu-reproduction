@@ -172,7 +172,14 @@ class DeviceSimExecutor(Executor):
             q.init_state(request_after)
             st["q_initialised"] = True
         elif slot_src == "q" and stats.get("merged"):
+            # verification trace for Eq. 6: transition, value before/after, greedy or exploratory choice
+            l_prev, a_idx = q.last
+            row = q.H[l_prev]
+            stats.update(q_prev_state=int(l_prev), q_action=int(a_idx), q_next_state=int(q.cur),
+                         q_h_before=float(q.H[l_prev, a_idx]), q_max_next=float(q.H[q.cur].max()),
+                         q_greedy=bool(row[a_idx] == row.max()))
             stats["q_value"] = q.update(stats["reward"])
+            stats["q_h_after"] = stats["q_value"]
         st["q"] = q.state_dict()
         st["n_train"] += 1
         self._save_state(d, st)

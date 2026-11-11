@@ -148,9 +148,14 @@ def _merge_fresh(model, w_g, g, o, x, y, norm, cfg, gen, st, dhp):
     loss_a = loss_a_t.item()
     gdot = float(torch.dot(grad, w_g_params - w_loc_params))
     d_gamma, d_ups = control_gradients_device(gamma, ups, g, o, dhp.mu_beta, gdot)
+    # verification: the realised mixing ratio |w_a - w_b| / |w_g - w_b| must equal beta (Formula 7)
+    w_after = _flat_params(model)
+    den = float(torch.linalg.vector_norm(w_g_params - w_loc_params))
+    eq7_ratio = float(torch.linalg.vector_norm(w_after - w_loc_params)) / den if den > 0 else float("nan")
     st["gamma"] = gamma - dhp.eta_gamma * d_gamma
     st["upsilon"] = ups - dhp.eta_upsilon * d_ups
     R = loss_b - loss_a
     st["b"] = (1 - dhp.rho) * st.get("b", 0.0) + dhp.rho * R
     return {"merged": True, "beta": beta, "phi": phi, "loss_before": loss_b, "loss_after": loss_a, "reward": R,
-            "gamma": st["gamma"], "upsilon": st["upsilon"], "b": st["b"], "grad_dot": gdot}
+            "gamma": st["gamma"], "upsilon": st["upsilon"], "b": st["b"], "grad_dot": gdot,
+            "gamma_before": gamma, "upsilon_before": ups, "d_gamma": d_gamma, "d_upsilon": d_ups, "eq7_ratio": eq7_ratio}

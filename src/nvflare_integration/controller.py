@@ -55,6 +55,25 @@ from .common import (ASYNC_FEDASMU, FEDBUFF, TASK_TRAIN, TOPIC_POLL, TOPIC_REQ, 
 
 TRIGGER, REQUEST, ARRIVAL = 0, 1, 2  # tie order at equal virtual time
 
+# Verification trace (metrics_dir/trace.csv): one row per received update with the inputs and
+# outputs of every FedASMU formula, so that scripts/verify_fedasmu.py can recompute each formula
+# from the logged inputs and compare it with what the run actually did.
+TRACE_FIELDS = [
+    "received", "vtime", "device", "algorithm", "t", "o", "staleness", "accepted",
+    # server, Eq. 2-3 and Eq. 1
+    "lam_before", "sig_before", "iota_before", "prev_t", "prev_tau", "prev_xi", "g_dot_prev",
+    "grad_lam", "grad_sig", "grad_iota", "lam", "sig", "iota", "xi", "alpha", "eq1_ratio", "eq1_resid",
+    # device, Formula 7-9 and reward
+    "slot_src", "request_after", "fresh_version", "merged", "gamma_before", "upsilon_before", "phi", "beta",
+    "grad_dot", "d_gamma", "d_upsilon", "gamma", "upsilon", "eq7_ratio", "loss_before", "loss_after", "reward", "b",
+    # device Q-learning, Eq. 6
+    "q_prev_state", "q_action", "q_next_state", "q_greedy", "q_h_before", "q_max_next", "q_h_after",
+    # server LSTM meta model, Eq. 5
+    "meta_feat", "meta_probs", "meta_decisions", "meta_slot", "meta_reward", "meta_baseline_before", "meta_adv",
+    "meta_lp_before", "meta_lp_after",
+    # FedBuff (NVFLARE BuffModelManager)
+    "fb_generated", "fb_model_version"]
+
 
 class _Run:
     __slots__ = ("device", "site", "task_id", "t0", "o", "down", "w_o_params", "req_epoch", "req_time",
@@ -143,7 +162,7 @@ class AsyncSimController(Controller):
         engine.register_aux_message_handler(TOPIC_POLL, self._on_poll)
         if not (cfg.get("resume", True) and os.path.exists(os.path.join(self.ckpt_dir, "server_state.pkl"))):
             # fresh start (e.g. re-run after a crash before the first checkpoint): discard partial logs
-            for name in ("updates.csv", "eval.csv"):
+            for name in ("updates.csv", "eval.csv", "trace.csv"):
                 p = os.path.join(self.metrics_dir, name)
                 if os.path.exists(p):
                     os.replace(p, p + ".discarded")
@@ -167,6 +186,11 @@ class AsyncSimController(Controller):
             "total_steps", "total_samples", "running"])
         if mode == "w":
             self.w_ev.writeheader()
+        mode = "a" if os.path.exists(os.path.join(self.metrics_dir, "trace.csv")) else "w"
+        self.f_tr = open(os.path.join(self.metrics_dir, "trace.csv"), mode, newline="")
+        self.w_tr = csv.DictWriter(self.f_tr, fieldnames=TRACE_FIELDS, extrasaction="ignore")
+        if mode == "w":
+            self.w_tr.writeheader()
 
     # -------------------------------------------------------------- helpers
     def _push(self, t, kind, payload):
@@ -269,9 +293,10 @@ class AsyncSimController(Controller):
         if self.algorithm in ASYNC_FEDASMU and self.flags["fresh"] and d not in self.meta_done \
                 and self.cfg["fedasmu"].get("fixed_slot") is None:
             feat = [p.slowdown / self.cfg["hetero"], self.parts_sizes[d] / (sum(self.parts_sizes) / self.n_dev) / 4.0]
+            probs = self.meta.model.probs(feat)  # distribution over l* before sampling (trace)
             slot, decisions = self.meta.decide(feat)
             headers["meta_slot"] = slot
-            meta = (feat, decisions, slot)
+            meta = (feat, decisions, slot, probs)
         data = weights_shareable(self._global_numpy(), headers=headers)
         w_o_params = flat_params(self.global_sd, self.param_names).clone().cpu() if self.algorithm in ASYNC_FEDASMU else None
         run = _Run(device=d, site=site, task_id=tid, t0=t, o=o, down=down, w_o_params=w_o_params, meta=meta, lr=lr,
@@ -421,12 +446,24 @@ class AsyncSimController(Controller):
                        aggregations=self.aggregations)
             self.w_upd.writerow(row)
             return
+        tr = dict(received=row["received"], vtime=row["vtime"], device=d, algorithm=self.algorithm, o=r.o)
+        tr.update({k: stats.get(k) for k in TRACE_FIELDS if k in stats})
         if self.algorithm in ASYNC_FEDASMU:
             w_i_sd = numpy_to_sd(w_i, self.gdev)
-            new, info = self.server.aggregate(self.global_sd, w_i_sd, r.w_o_params, flat_params(w_i_sd, self.param_names),
-                                              flat_params(self.global_sd, self.param_names), d, r.o, r.lr,
+            wi_flat = flat_params(w_i_sd, self.param_names)
+            wt_flat = flat_params(self.global_sd, self.param_names)
+            new, info = self.server.aggregate(self.global_sd, w_i_sd, r.w_o_params, wi_flat, wt_flat, d, r.o, r.lr,
                                               int(stats.get("steps", 1)))
+            tr.update({k: v for k, v in info.items() if k in TRACE_FIELDS})
             if new is not None:
+                # realised mixing ratio of Eq. 1 measured on the actual tensors (must equal alpha)
+                nw = flat_params(new, self.param_names)
+                den = float(torch.linalg.vector_norm(wi_flat - wt_flat))
+                tr["eq1_ratio"] = float(torch.linalg.vector_norm(nw - wt_flat)) / den if den > 0 else float("nan")
+                a = info["alpha"]
+                tr["eq1_resid"] = float(torch.linalg.vector_norm(nw - ((1 - a) * wt_flat + a * wi_flat))) / \
+                    max(float(torch.linalg.vector_norm(wt_flat)), 1e-12)
+                del nw
                 self.global_sd = new
                 self.version += 1
                 self.aggregations += 1
@@ -437,15 +474,26 @@ class AsyncSimController(Controller):
                        lam=info.get("lam"), sig=info.get("sig"), iota=info.get("iota"))
             # LSTM meta model update with the reward of the device's first training (Eq. 5)
             if r.meta is not None:
-                feat, decisions, slot = r.meta
+                feat, decisions, slot, probs = r.meta
+                tr.update(meta_feat=json.dumps([round(x, 6) for x in feat]), meta_probs=json.dumps([round(x, 6) for x in probs]),
+                          meta_decisions=json.dumps(decisions), meta_slot=slot)
                 if stats.get("merged"):
-                    self.meta.update(feat, decisions, float(stats["reward"]))
+                    with torch.no_grad():
+                        lp0 = float(self.meta.model.log_prob(feat, decisions))
+                    b0 = self.meta.baseline
+                    adv = self.meta.update(feat, decisions, float(stats["reward"]))
+                    with torch.no_grad():
+                        lp1 = float(self.meta.model.log_prob(feat, decisions))
+                    tr.update(meta_reward=float(stats["reward"]), meta_baseline_before=b0, meta_adv=adv,
+                              meta_lp_before=lp0, meta_lp_after=lp1)
                     self.meta_history.append({"feat": feat, "decisions": decisions, "slot": slot,
                                               "reward": float(stats["reward"])})
                 self.meta_done.add(d)
         elif self.algorithm in FEDBUFF:
             stal = self.mgr.current_model_version - r.o
             generated = submit_update(self.mgr, w_i, r.o, d, t, fl_ctx)
+            tr.update(staleness=stal, accepted=True, fb_generated=bool(generated),
+                      fb_model_version=self.mgr.current_model_version)
             self.accepted += 1
             if generated:
                 self.version += 1
@@ -453,8 +501,11 @@ class AsyncSimController(Controller):
             row.update(staleness=stal, accepted=True)
         row.update(global_version=self.version, aggregations=self.aggregations)
         self.w_upd.writerow(row)
+        if self.cfg.get("trace", True):
+            self.w_tr.writerow(tr)
         if self.received % 10 == 0:
             self.f_upd.flush()
+            self.f_tr.flush()
         if self.received % self.cfg["eval_every"] == 0:
             acc = self._log_eval()
             self.log_info(fl_ctx, f"[{self.algorithm}] received={self.received} version={self.version} "
@@ -575,11 +626,12 @@ class AsyncSimController(Controller):
                 ms.aggregator.dict, ms.aggregator.count = dct, cnt
                 self.mgr.updates[v] = ms
         # rows logged after the checkpoint belong to dropped work -> truncate logs
-        for name, key in (("updates.csv", "received"), ("eval.csv", "received")):
+        for name, key in (("updates.csv", "received"), ("eval.csv", "received"), ("trace.csv", "received")):
             p = os.path.join(self.metrics_dir, name)
             self._truncate_csv(p, key, self.received)
         self.f_upd.close()
         self.f_ev.close()
+        self.f_tr.close()
         self._open_logs()
         self.log_info(fl_ctx, f"resumed from checkpoint at received={self.received} vtime={self.vtime:.1f}")
         with open(os.path.join(self.metrics_dir, "resume_log.txt"), "a") as f:
@@ -624,14 +676,14 @@ class AsyncSimController(Controller):
                 json.dump(ctrl, f)
         with open(os.path.join(self.metrics_dir, "server_summary.json"), "w") as f:
             json.dump(summary, f, indent=1)
-        for fh in (self.f_upd, self.f_ev):
+        for fh in (self.f_upd, self.f_ev, self.f_tr):
             try:
                 fh.flush()
             except Exception:
                 pass
 
     def stop_controller(self, fl_ctx: FLContext):
-        for fh in (getattr(self, "f_upd", None), getattr(self, "f_ev", None)):
+        for fh in (getattr(self, "f_upd", None), getattr(self, "f_ev", None), getattr(self, "f_tr", None)):
             if fh:
                 fh.close()
 

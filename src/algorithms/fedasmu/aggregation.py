@@ -141,6 +141,9 @@ class FedASMUServer:
         if tau > hp.tau_max:  # line 9-10
             return None, info
         st = self.dev[device]
+        # values before Eq. 3 (verification trace)
+        info.update(lam_before=st.lam, sig_before=st.sig, iota_before=st.iota, prev_t=st.prev_t,
+                    prev_tau=st.prev_tau, prev_xi=st.prev_xi)
         prev_delta = self.deltas.get(device) if hp.dynamic else None
         if prev_delta is not None:  # line 12: Eq. 3
             g = (w_i_params - w_o_params) if hp.paper_sign else (w_o_params - w_i_params)
