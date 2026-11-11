@@ -78,6 +78,11 @@ def verify_fedasmu(rep, tr, cfg):
     f, L = cfg["fedasmu"], cfg["local"]["epochs"]
     mu_a, mu_b = f["mu_alpha"], f["mu_beta"]
     acc = tr[_b(tr.accepted)]
+    # ---------------- server: triggering (Algorithm 1 lines 1-6) ----------------
+    ev = pd.read_csv(os.path.join(MET, cfg["run_id"], "eval.csv"))
+    rep.check("S0", f"at most m' = {cfg['max_concurrency']} devices train at the same time (triggered every T)",
+              "Algorithm 1 l.1-6", len(ev), ok=len(ev) > 0 and int(ev.running.max()) <= cfg["max_concurrency"],
+              note=f"devices in training at evaluation points: max {int(ev.running.max())}, mean {ev.running.mean():.1f}")
     # ---------------- server: staleness, Eq. 2, Eq. 1, Eq. 3 ----------------
     tau = tr.t - tr.o + 1
     rep.check("S1", "staleness tau = t - o + 1", "Algorithm 1 l.9", len(tr), rel_err(tr.staleness, tau), 0)
@@ -146,6 +151,12 @@ def verify_fedasmu(rep, tr, cfg):
     rep.check("D9", "reward R = loss(before merge) - loss(after merge), same mini-batch", "Algorithm 2 l.11", len(m),
               rel_err(m.reward, m.loss_before - m.loss_after), 1e-9,
               note=f"R > 0 (merge lowered the loss) in {(m.reward > 0).mean() * 100:.1f}% of merges")
+    errs, bad_init = [], False
+    for _, d in m.sort_values("received").groupby("device"):
+        b_prev = np.concatenate([[0.0], d.b.values[:-1]])
+        errs.append(np.max(np.abs(d.b.values - ((1 - f["rho"]) * b_prev + f["rho"] * d.reward.values))))
+    rep.check("D10", "device baseline b <- (1-rho) b + rho R (starts at 0)", "Algorithm 2 l.13", len(m),
+              max(errs) if errs else float("nan"), 1e-12)
     # ---------------- Q-learning, Eq. 6 ----------------
     q = tr[tr.q_h_after.notna()]
     tgt = q.q_h_before + f["q_phi"] * (q.reward + f["q_psi"] * q.q_max_next - q.q_h_before)

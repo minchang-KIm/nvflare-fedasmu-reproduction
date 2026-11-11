@@ -1,9 +1,10 @@
 # Verification of smoke_trace_cnn_cifar10_fedasmu_s0
 
-Run status: COMPLETED; 60 logged updates. Result: **ALL CHECKS PASSED** (24/24).
+Run status: COMPLETED; 60 logged updates. Result: **ALL CHECKS PASSED** (26/26).
 
 | ID | Check | Paper | Rows | Max error | Tolerance | Result | Note |
 |---|---|---|---|---|---|---|---|
+| S0 | at most m' = 4 devices train at the same time (triggered every T) | Algorithm 1 l.1-6 | 9 |  |  | PASS | devices in training at evaluation points: max 3, mean 2.4 |
 | S1 | staleness tau = t - o + 1 | Algorithm 1 l.9 | 60 | 0.0e+00 | 0e+00 | PASS |  |
 | S2 | update discarded iff tau > 99 | Algorithm 1 l.9-10 | 60 |  |  | PASS | discarded: 0 |
 | S3 | xi = lam/(sqrt(t)(t-o+1)^sig) + iota | Eq. 2 | 60 | 0.0e+00 | 1e-09 | PASS |  |
@@ -21,6 +22,7 @@ Run status: COMPLETED; 60 logged updates. Result: **ALL CHECKS PASSED** (24/24).
 | D7 | gamma/upsilon <- x - eta_x * dF/dx | Formula 9 | 46 | 0.0e+00 | 1e-09 | PASS |  |
 | D8 | per-device gamma: value before a merge == value after its previous merge; start at gamma0 | Algorithm 2 (device state) | 46 | 0.0e+00 | 1e-12 | PASS |  |
 | D9 | reward R = loss(before merge) - loss(after merge), same mini-batch | Algorithm 2 l.11 | 46 | 0.0e+00 | 1e-09 | PASS | R > 0 (merge lowered the loss) in 10.9% of merges |
+| D10 | device baseline b <- (1-rho) b + rho R (starts at 0) | Algorithm 2 l.13 | 46 | 0.0e+00 | 1e-12 | PASS |  |
 | Q1 | H(s,a) <- H + phi (R + psi max_a' H(s',a') - H) | Eq. 6 | 41 | 0.0e+00 | 1e-09 | PASS |  |
 | Q2 | action add/stay/minus moves l* by +1/0/-1; device requests at the new l* | Eq. 6 (actions) | 41 |  |  | PASS |  |
 | Q3 | epsilon-greedy: greedy choices >= 1 - epsilon = 0.90 (minus ties) | Eq. 6 (policy) | 41 |  |  | PASS | greedy share 92.7% |

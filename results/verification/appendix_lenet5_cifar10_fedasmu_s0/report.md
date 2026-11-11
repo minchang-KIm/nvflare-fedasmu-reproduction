@@ -1,9 +1,10 @@
 # Verification of appendix_lenet5_cifar10_fedasmu_s0
 
-Run status: COMPLETED; 5000 logged updates. Result: **ALL CHECKS PASSED** (24/24).
+Run status: COMPLETED; 5000 logged updates. Result: **ALL CHECKS PASSED** (26/26).
 
 | ID | Check | Paper | Rows | Max error | Tolerance | Result | Note |
 |---|---|---|---|---|---|---|---|
+| S0 | at most m' = 10 devices train at the same time (triggered every T) | Algorithm 1 l.1-6 | 102 |  |  | PASS | devices in training at evaluation points: max 9, mean 8.6 |
 | S1 | staleness tau = t - o + 1 | Algorithm 1 l.9 | 5000 | 0.0e+00 | 0e+00 | PASS |  |
 | S2 | update discarded iff tau > 99 | Algorithm 1 l.9-10 | 5000 |  |  | PASS | discarded: 0 |
 | S3 | xi = lam/(sqrt(t)(t-o+1)^sig) + iota | Eq. 2 | 5000 | 0.0e+00 | 1e-09 | PASS |  |
@@ -21,6 +22,7 @@ Run status: COMPLETED; 5000 logged updates. Result: **ALL CHECKS PASSED** (24/24
 | D7 | gamma/upsilon <- x - eta_x * dF/dx | Formula 9 | 4410 | 0.0e+00 | 1e-09 | PASS |  |
 | D8 | per-device gamma: value before a merge == value after its previous merge; start at gamma0 | Algorithm 2 (device state) | 4410 | 0.0e+00 | 1e-12 | PASS |  |
 | D9 | reward R = loss(before merge) - loss(after merge), same mini-batch | Algorithm 2 l.11 | 4410 | 0.0e+00 | 1e-09 | PASS | R > 0 (merge lowered the loss) in 29.9% of merges |
+| D10 | device baseline b <- (1-rho) b + rho R (starts at 0) | Algorithm 2 l.13 | 4410 | 0.0e+00 | 1e-12 | PASS |  |
 | Q1 | H(s,a) <- H + phi (R + psi max_a' H(s',a') - H) | Eq. 6 | 4327 | 0.0e+00 | 1e-09 | PASS |  |
 | Q2 | action add/stay/minus moves l* by +1/0/-1; device requests at the new l* | Eq. 6 (actions) | 4327 |  |  | PASS |  |
 | Q3 | epsilon-greedy: greedy choices >= 1 - epsilon = 0.90 (minus ties) | Eq. 6 (policy) | 4327 |  |  | PASS | greedy share 94.0% |
