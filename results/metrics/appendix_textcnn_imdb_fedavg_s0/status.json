@@ -1,1 +1,7 @@
-{"status": "RUNNING", "started": "2026-11-12 07:26:26"}
+{
+ "status": "COMPLETED",
+ "started": "2026-11-12 07:26:26",
+ "wall_seconds": 2316.64572763443,
+ "error": null,
+ "git": "6a65a9c94bb287de5fd9cde605c3d703833353dd"
+}
