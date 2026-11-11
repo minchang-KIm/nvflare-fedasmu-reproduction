@@ -4,7 +4,7 @@ resnet20-tinyimagenet: FedASMU: not started; FedAvg: not started; FedBuff: not s
 lenet5-cifar100: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
 cnn-cifar100: FedASMU: COMPLETED; FedAvg: RUNNING; FedBuff: COMPLETED
 resnet20-cifar100: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
-alexnet-cifar10: FedASMU: RUNNING; FedAvg: not started; FedBuff: not started
+alexnet-cifar10: FedASMU: COMPLETED; FedAvg: not started; FedBuff: RUNNING
 vgg11-cifar10: FedASMU: not started; FedAvg: not started; FedBuff: not started
 textcnn-imdb: FedASMU: not started; FedAvg: not started; FedBuff: not started
 alexnet-cifar100: FedASMU: not started; FedAvg: not started; FedBuff: not started
