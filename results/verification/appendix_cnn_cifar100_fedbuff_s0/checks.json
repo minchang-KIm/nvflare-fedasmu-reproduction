@@ -1,0 +1,29 @@
+{
+ "run_id": "appendix_cnn_cifar100_fedbuff_s0",
+ "algorithm": "fedbuff",
+ "run_status": "COMPLETED",
+ "rows": 5000,
+ "all_passed": true,
+ "checks": [
+  {
+   "id": "B1",
+   "what": "NVFLARE BuffModelManager makes a new global model after every K = 10 updates",
+   "source": "FedBuff Alg. 1",
+   "n": 5000,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "500 new global models from 5000 updates"
+  },
+  {
+   "id": "B2",
+   "what": "model version increases by exactly 1 per aggregation",
+   "source": "FedBuff Alg. 1",
+   "n": 5000,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": ""
+  }
+ ]
+}
