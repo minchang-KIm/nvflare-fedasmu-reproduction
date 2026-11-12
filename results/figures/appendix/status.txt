@@ -5,8 +5,8 @@ lenet5-cifar100: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
 cnn-cifar100: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
 resnet20-cifar100: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
 alexnet-cifar10: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
-vgg11-cifar10: FedASMU: COMPLETED; FedAvg: RUNNING; FedBuff: COMPLETED
+vgg11-cifar10: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
 textcnn-imdb: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
-alexnet-cifar100: FedASMU: not started; FedAvg: not started; FedBuff: not started
+alexnet-cifar100: FedASMU: RUNNING; FedAvg: not started; FedBuff: not started
 vgg11-cifar100: FedASMU: COMPLETED; FedAvg: RUNNING; FedBuff: COMPLETED
 lenet5-fmnist: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
