@@ -1,0 +1,15 @@
+# Diagnostic runs for the gap between our appendix curves and the paper's (2026-11-12).
+# NOT main results and NOT tuning: every run is reported, none replaces an appendix run.
+# Same settings as the appendix profile (seed 0, same partition / initial weights /
+# device profiles / LSTM pre-training history); exactly one thing is changed per run.
+#  - psign: pseudo-gradient sign of Eq. 3 exactly as printed in the arXiv appendix,
+#           g ~= (w_o^i - w_o)/(eta L), instead of the SGD-consistent sign used by default.
+#           Tests whether the run-away of iota (LeNet/CIFAR-10: 0.01 -> 0.67, alpha ~0.8)
+#           comes from our sign interpretation.
+#  - fedasmu_da: control parameters lambda/sigma/iota fixed at their initial values
+#           (Eq. 3 off), i.e. alpha follows Eq. 2 without the drift.
+overrides: {trace: true}
+runs:
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: psign, fedasmu: {paper_sign: true}}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu_da}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: psign, fedasmu: {paper_sign: true}}
