@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | 기기 수 m | 100 (본문 Setup, 표 5·6) | ✅ | 100 | 논문 |
 | 동시 학습 수 m′ | 10 = "maximum parallelism 10 % of devices" (부록, 표 5·6) | ✅ | 10 | 논문 |
-| 트리거 방식 | 표 5·6: 주기 T = 10. 부록 본문: "triggers one idle task every 5 seconds" | ⚠️ 표와 본문이 다름 (10 s에 m′대 vs 5 s마다 1대) | 10 s마다 빈 슬롯을 채움 (최대 10대) | 표 값 사용 |
+| 트리거 방식 | ① 본문 System Model ([AAAI] 3쪽, [arXiv] 3쪽): "The server triggers the local training of m′ devices with a constant time period T". ② 본문 Algorithm 1 설명 (4쪽): "A separated thread periodically triggers m′ devices when the number of devices performing training is smaller than a predefined value". ③ 표 4 ([arXiv] 15쪽): T = "The constant time period to trigger devices", m′ = "The number of devices to trigger within each time period". ④ 표 5·6 ([arXiv] 16쪽): T = 10, m′ = 10 (단위 없음). ⑤ 부록 Experiment details ([arXiv] 14쪽 오른쪽 단): "The server triggers one idle task every 5 seconds, with a maximum parallelism constraint, i.e., 10% of the total device number." | ⚠️ ①–④는 "T = 10마다 m′ = 10대", ⑤는 "5초마다 1대, 동시 최대 10대". T의 단위(초)는 ⑤에서만 추정 가능 | 10 s마다 빈 슬롯을 채움 (최대 10대) | 표 값 사용 |
 | 최대 staleness τ | 99 (표 5·6) | ✅ | 99 | 논문 |
 | 학습 예산 | 표 5·6: "T = 500 (maximum number of global rounds)", 모든 워크로드. 부록 본문: "500 epochs for synchronous, 5000 for asynchronous" | ⚠️ 단위("epoch")가 모호하고, 표에서는 FedASMU도 500 | 비동기 5,000 업데이트, FedAvg 500 라운드 | 본문 해석 |
 | 기기 속도 이질성 (straggler) | 부록 Experiment details: "slowest device five times longer than the fastest, sampled independently and randomly within this range". 같은 부록의 Figure 7 설명: "augmenting the difference (from 110 times faster to 440 times faster) between the fastest device and the lowest device" | ⚠️ 5배와 110배 · 440배가 함께 적혀 있음. 분포 형태(균등 여부)도 없음 | 기본 5배 균등. 진단 실험으로 110배 | 아래 3절 |
@@ -124,3 +124,35 @@
 - LeNet은 LeCun et al. **1989**를 인용합니다. 1989 원형은 tanh 활성화와 평균 풀링을 쓰고, 우리 구현은 ReLU와 max-pool입니다. 이런 차이는 정확도를 바꿀 수 있습니다.
 - 정확도에 영향을 주는 미공개 값도 많습니다: Dirichlet α, 로컬 epoch 수, 배치 크기, Formula 4의 "epoch" 정의, 감쇠 형태, 전처리.
 - 이 가설은 아직 실험하지 않았습니다.
+
+## 7. 표 3–6만으로 완전히 똑같이 구현할 수 있는 실험이 있는가
+
+없습니다. 표 3–6이 정하는 것과 정하지 않는 것은 다음과 같습니다.
+
+**표 3–6이 정하는 것**
+- 모든 워크로드: m = 100, m′ = 10, T(최대 라운드) = 500, τ = 99, T(트리거 주기) = 10
+- 워크로드별 값: ηλ, ησ, ηι, ηγ, ηυ, ηᵢ, η_RL
+- CNN 구조 (표 3)
+
+**표 3–6에 없고, 모든 워크로드에 공통으로 필요한 값**
+1. 로컬 학습량: L(최대 로컬 epoch), 배치 크기, "epoch"의 정의 (Formula 4는 epoch마다 미니배치 1스텝으로 적혀 있음)
+2. 데이터 분할: Dirichlet α
+3. FedASMU 수식 상수: μα, μβ, 초기값 λ₀ σ₀ ι₀ γ₀ υ₀, ρ, Q-러닝 φ ψ ε, LSTM 구조와 사전학습 데이터
+4. 시간 모델: 에폭당 시간, 속도 분포(5배 vs 110배), 통신 시간 · 대역폭
+5. 학습률 감쇠의 형태 · 계수, 평가 방식 · 주기, seed
+6. 비교 기법 파라미터: FedBuff K · 서버 학습률 등 전부
+
+**워크로드별로 추가로 빠진 것**
+
+| 워크로드 | 모델 구조 | 가장 가까운 정도 |
+|---|---|---|
+| CNN / CIFAR-10, CNN / CIFAR-100 | 표 3에 있음 (활성화 종류, 패딩 · stride는 없음) | 가장 완전. 위 공통 항목 1–6만 빠짐 |
+| LeNet / FMNIST, CIFAR-10, CIFAR-100 | 없음 (LeCun et al. 1989 인용만) | 모델 구조도 가정 |
+| ResNet / CIFAR-100, Tiny-ImageNet | 없음 (ResNet20 이름만, BN · 입력 크기 미정) | 모델 구조도 가정 |
+| AlexNet, VGG / CIFAR-10 · 100 | 없음 (32×32 입력 변형 방식 미정) | 모델 구조도 가정 |
+| TextCNN / IMDb | 없음 (임베딩 · 필터 · 어휘 · 문장 길이 미정) | 모델과 전처리 모두 가정 |
+
+**표의 해석 문제**
+- 표 5·6의 "T = 500"은 표 4에서 "The maximum number of global rounds"로 정의되고, FedASMU 열에도 500으로 적혀 있습니다.
+- 반면 부록 본문은 비동기 기법을 5,000 epochs라고 합니다.
+- 따라서 FedASMU의 학습 예산 자체가 표와 본문 중 어느 쪽인지 확정할 수 없습니다.
