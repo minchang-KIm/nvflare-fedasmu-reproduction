@@ -63,6 +63,14 @@ global model and so has no staleness.
 The paper's synchronous baselines (FedAvg, FedProx, MOON, FedDyn) all rise equally slowly. This suggests a
 setting for synchronous methods that the paper does not describe, so we cannot reproduce it from the text.
 
+- **Straggler test (diagnose profile, LeNet / CIFAR-10, device speeds U[1, 110]).** This uses the "110 times"
+  of the paper's Figure 7 text.
+  - FedAvg now takes 1.82× the asynchronous time for its whole budget, up from 1.55×.
+  - FedAvg reaches the targets only 1.38× (0.30) and 1.25× (0.40) later than FedASMU. The paper reports 14.1×
+    and 12.3×.
+  - Final accuracies barely change: FedASMU 0.466, FedBuff 0.535, FedAvg 0.508.
+  - Conclusion: the stated straggler setting does not produce the paper's slow FedAvg curves.
+
 ### (c) The paper's curves are 10–100× smoother
 - **Roughness** (table below) is the mean |Δ accuracy| between neighbouring points in the second half of the
   run. Paper: 0.0001–0.0006. Ours: 0.002–0.03.

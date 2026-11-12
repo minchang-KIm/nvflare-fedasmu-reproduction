@@ -165,3 +165,5 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
     - Eq. 3 off: 0.523;
     - default: 0.448;
     - FedBuff: 0.540.
+- 2026-11-12, `docs/PAPER_CONDITIONS.md`: every experimental condition in both paper versions, marked as published, ambiguous or unpublished, together with our value. Found six internal inconsistencies, including 5× vs "110 to 440 times" device heterogeneity.
+  - Straggler test, LeNet / CIFAR-10 with device speeds U[1, 110]: FedAvg / FedASMU time-to-target 1.38× and 1.25×, vs the paper's 14.1× and 12.3×. Final accuracies: FedASMU 0.466, FedBuff 0.535, FedAvg 0.508.
