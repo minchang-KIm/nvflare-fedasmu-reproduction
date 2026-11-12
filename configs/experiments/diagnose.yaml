@@ -13,3 +13,11 @@ runs:
   - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: psign, fedasmu: {paper_sign: true}}
   - {model: lenet5, dataset: cifar10, algorithm: fedasmu_da}
   - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: psign, fedasmu: {paper_sign: true}}
+# Straggler test (added 2026-11-12).  The arXiv appendix states a 5x spread between the
+# slowest and fastest device for the main experiments, but its Figure 7 text describes the
+# device heterogeneity as "from 110 times faster to 440 times faster", and the accuracies of
+# the Figure 7 "Moderately Heterogeneous" bars equal Table 2 (LeNet / FMNIST).  These runs use
+# a 110x spread (u_i ~ U[1, 110]) to test whether stragglers explain the slow FedAvg curves.
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: h110, hetero: 110.0}
+  - {model: lenet5, dataset: cifar10, algorithm: fedbuff, variant: h110, hetero: 110.0}
+  - {model: lenet5, dataset: cifar10, algorithm: fedavg, variant: h110, hetero: 110.0}
