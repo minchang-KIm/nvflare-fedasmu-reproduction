@@ -167,3 +167,6 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
     - FedBuff: 0.540.
 - 2026-11-12, `docs/PAPER_CONDITIONS.md`: every experimental condition in both paper versions, marked as published, ambiguous or unpublished, together with our value. Found six internal inconsistencies, including 5× vs "110 to 440 times" device heterogeneity.
   - Straggler test, LeNet / CIFAR-10 with device speeds U[1, 110]: FedAvg / FedASMU time-to-target 1.38× and 1.25×, vs the paper's 14.1× and 12.3×. Final accuracies: FedASMU 0.466, FedBuff 0.535, FedAvg 0.508.
+- 2026-11-12, both paper versions re-checked: neither gives any absolute time (time per epoch, per training or per round), bandwidth value or speed distribution, only "Time (s)" axes. `appendix_figures.py` now also writes `appendix_figN_timefit.png`, which rescales our time axis by one factor per workload (fitted from FedASMU and FedBuff rise times, `time_scale.json`); accuracies are unchanged.
+  - Factors: LeNet 2.9 / 1.9 / 1.7, CNN 11.1 / 13.1, ResNet 0.61 / 0.63, AlexNet 0.26 / 0.25, VGG 1.5 / 1.7.
+  - TextCNN gets no factor (1) because its curves do not rise.

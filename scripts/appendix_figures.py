@@ -11,6 +11,15 @@ so the figures can be refreshed in real time (scripts/live_sync.sh).
   axis is also simulated time of its own system, whose time model is not published.
   The paper plots 10 methods; only these 3 are implemented here.
 - A curve that leaves the paper's axes is cut there, and the panel says so.
+- appendix_figN_timefit.png: the paper gives no time per epoch, bandwidth or other absolute
+  time (only "Time (s)"), so our time axis has an assumed scale.  These figures multiply our
+  virtual time by one factor s per workload (same s for all three methods), chosen so that
+  our FedASMU and FedBuff curves rise as fast as the paper's: s = geometric mean of
+  t_paper / t_ours at 50 %, 80 % and 90 % of each curve's own rise (start -> mean of its
+  last 5 %), FedASMU and FedBuff only.  FedAvg is excluded because its slowdown in the paper
+  cannot come from the stated time model (results/reports/paper_gap_analysis.md).  No fit
+  where our curves do not rise (TextCNN / IMDb stays at 0.50): s = 1.  Fitted factors are in
+  time_scale.json.  Only the x axis is rescaled; accuracies are unchanged.
   appendix_figN_fullrange.png repeats the figure with the right panel's limits widened
   just enough to show all of our data (ticks keep the paper's spacing).
 """
@@ -23,6 +32,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.image as mpimg  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -57,7 +67,43 @@ def load(profile, model, ds, algo, seed):
     return ev, st
 
 
-def ours(ax, profile, model, ds, seed, axes, full=False):
+def rise_time(t, a, fr):
+    t, a = np.asarray(t, float), np.asarray(a, float)
+    lo, hi = a[0], np.mean(a[-max(3, len(a) // 20):])
+    if hi - lo < 0.02:  # the curve does not rise
+        return None
+    i = np.where(np.maximum.accumulate(a) >= lo + fr * (hi - lo))[0]
+    return float(t[i[0]]) if len(i) else None
+
+
+def fit_scales(profile, seed):
+    """One time factor per workload from FedASMU and FedBuff rise times (see module doc)."""
+    path = os.path.join(PAPER, "curves.csv")
+    if not os.path.exists(path):
+        return {}
+    pc = pd.read_csv(path)
+    out = {}
+    for fig, (_, panels) in FIGS.items():
+        for m, d in panels:
+            key, ratios, done = f"{m}-{d}", [], True
+            for algo, name in (("fedasmu", "FedASMU"), ("fedbuff", "FedBuff")):
+                ev, st = load(profile, m, d, algo, seed)
+                if ev is None or len(ev) < 5:
+                    done = False
+                    continue
+                done &= st == "COMPLETED"
+                P = pc[(pc.workload == key) & (pc.method == name)].sort_values("time_s")
+                for fr in (0.5, 0.8, 0.9):
+                    tp, to = rise_time(P.time_s, P.accuracy, fr), rise_time(ev.vtime, ev.test_acc, fr)
+                    if tp and to:
+                        ratios.append(tp / to)
+            s = float(np.exp(np.mean(np.log(ratios)))) if len(ratios) >= 3 else 1.0
+            out[key] = {"scale": s, "n_ratios": len(ratios), "ratios": [round(r, 3) for r in ratios],
+                        "provisional": not done, "fitted": len(ratios) >= 3}
+    return out
+
+
+def ours(ax, profile, model, ds, seed, axes, full=False, scale=1.0):
     """Our curves on the paper panel's exact axes (full=True: limits widened just enough
     to show all of our data, ticks kept at the paper's spacing). Returns status text."""
     x0, x1 = axes["xlim"]
@@ -70,6 +116,7 @@ def ours(ax, profile, model, ds, seed, axes, full=False):
             continue
         lab = label if st == "COMPLETED" else f"{label} (running)"
         n = len(ev)
+        ev = ev.assign(vtime=ev.vtime * scale)
         ax.plot(ev.vtime, ev.test_acc, color=color, lw=1.6, marker=mk, ms=4, markevery=max(n // 5, 1), label=lab)
         status.append(f"{label}: {st}")
         xs += [ev.vtime.min(), ev.vtime.max()]
@@ -110,14 +157,17 @@ def ours(ax, profile, model, ds, seed, axes, full=False):
     return status
 
 
-def pair(axl, axr, profile, model, ds, seed, letter, axes_all, full=False):
+def pair(axl, axr, profile, model, ds, seed, letter, axes_all, full=False, scale=None):
     key = f"{model}-{ds}"
     axl.imshow(mpimg.imread(os.path.join(PAPER, f"{key}.png")))
     axl.axis("off")
     axl.set_title(f"({letter}) {NAMES[model]} & {NAMES[ds]} - paper", fontsize=9)
-    st = ours(axr, profile, model, ds, seed, axes_all[key], full)
-    axr.set_title(f"({letter}) {NAMES[model]} & {NAMES[ds]} - ours (NVFLARE)" + (", widened axes" if full else ""),
-                  fontsize=9)
+    st = ours(axr, profile, model, ds, seed, axes_all[key], full, 1.0 if scale is None else scale["scale"])
+    extra = ", widened axes" if full else ""
+    if scale is not None:
+        extra = (f", time x{scale['scale']:.2f}" + (" (fitted" + (", provisional" if scale["provisional"] else "") + ")"
+                                                   if scale["fitted"] else " (not fitted: no rise)"))
+    axr.set_title(f"({letter}) {NAMES[model]} & {NAMES[ds]} - ours (NVFLARE){extra}", fontsize=9)
     return st
 
 
@@ -148,6 +198,20 @@ def main():
                        fontsize=9)
             f.tight_layout(rect=(0, 0, 1, 0.97))
             f.savefig(os.path.join(OUT, f"appendix_{fig}{'_fullrange' if full else ''}.png"), dpi=110)
+            plt.close(f)
+    scales = fit_scales(a.profile, a.seed)
+    if scales:
+        json.dump(scales, open(os.path.join(OUT, "time_scale.json"), "w"), indent=1)
+        for fig, (title, panels) in FIGS.items():
+            f, ax = plt.subplots(3, 2, figsize=(11, 12.5))
+            for r, (m, d) in enumerate(panels):
+                pair(ax[r, 0], ax[r, 1], a.profile, m, d, a.seed, "abc"[r], axes_all, scale=scales[f"{m}-{d}"])
+            f.suptitle(f"Paper appendix {fig.replace('fig', 'Figure ')} ({title}): paper vs ours, our time axis "
+                       "rescaled per workload\n(the paper gives no time per epoch; one factor per workload, fitted so "
+                       "that our FedASMU and FedBuff curves rise as fast as the paper's; accuracies unchanged)",
+                       fontsize=9)
+            f.tight_layout(rect=(0, 0, 1, 0.96))
+            f.savefig(os.path.join(OUT, f"appendix_{fig}_timefit.png"), dpi=110)
             plt.close(f)
     big.suptitle("FedASMU paper appendix Figures 3-6 vs our NVFLARE reproduction (all 12 workloads)\n" + src, fontsize=11)
     big.tight_layout(rect=(0, 0, 1, 0.98))

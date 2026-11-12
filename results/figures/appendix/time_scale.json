@@ -1,0 +1,160 @@
+{
+ "lenet5-cifar10": {
+  "scale": 2.8778700244565143,
+  "n_ratios": 6,
+  "ratios": [
+   6.961,
+   5.073,
+   4.644,
+   2.618,
+   1.315,
+   1.006
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "cnn-cifar10": {
+  "scale": 11.138544386663632,
+  "n_ratios": 6,
+  "ratios": [
+   15.953,
+   16.01,
+   25.536,
+   7.77,
+   6.589,
+   5.72
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "resnet20-tinyimagenet": {
+  "scale": 0.6272886237009097,
+  "n_ratios": 3,
+  "ratios": [
+   1.034,
+   0.497,
+   0.48
+  ],
+  "provisional": true,
+  "fitted": true
+ },
+ "lenet5-cifar100": {
+  "scale": 1.9138684752730695,
+  "n_ratios": 6,
+  "ratios": [
+   2.493,
+   2.327,
+   2.617,
+   1.332,
+   1.53,
+   1.588
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "cnn-cifar100": {
+  "scale": 13.114513367852693,
+  "n_ratios": 6,
+  "ratios": [
+   11.664,
+   14.597,
+   13.043,
+   17.978,
+   11.511,
+   11.07
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "resnet20-cifar100": {
+  "scale": 0.6141396016750178,
+  "n_ratios": 6,
+  "ratios": [
+   0.937,
+   0.495,
+   0.508,
+   0.791,
+   0.459,
+   0.626
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "alexnet-cifar10": {
+  "scale": 0.2634381041983688,
+  "n_ratios": 6,
+  "ratios": [
+   0.242,
+   0.244,
+   0.237,
+   0.233,
+   0.267,
+   0.384
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "vgg11-cifar10": {
+  "scale": 1.496844149448027,
+  "n_ratios": 6,
+  "ratios": [
+   1.12,
+   1.421,
+   1.616,
+   1.373,
+   1.74,
+   1.83
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "textcnn-imdb": {
+  "scale": 1.0,
+  "n_ratios": 0,
+  "ratios": [],
+  "provisional": false,
+  "fitted": false
+ },
+ "alexnet-cifar100": {
+  "scale": 0.2474613430538644,
+  "n_ratios": 6,
+  "ratios": [
+   0.142,
+   0.178,
+   0.295,
+   0.2,
+   0.317,
+   0.489
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "vgg11-cifar100": {
+  "scale": 1.6690441542368109,
+  "n_ratios": 6,
+  "ratios": [
+   1.201,
+   1.262,
+   1.435,
+   2.264,
+   2.141,
+   2.05
+  ],
+  "provisional": false,
+  "fitted": true
+ },
+ "lenet5-fmnist": {
+  "scale": 1.6833976503720145,
+  "n_ratios": 6,
+  "ratios": [
+   2.214,
+   1.415,
+   1.75,
+   1.528,
+   1.666,
+   1.631
+  ],
+  "provisional": false,
+  "fitted": true
+ }
+}
