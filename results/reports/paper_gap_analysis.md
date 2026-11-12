@@ -91,10 +91,36 @@ setting for synchronous methods that the paper does not describe, so we cannot r
   (K = 10, server learning rate 1) keeps improving to 0.54–0.56. The paper does not give its FedBuff K or
   server learning rate.
 
-## 3. Diagnostic runs
+## 3. Diagnostic runs (`configs/experiments/diagnose.yaml`, seed 0, one change each)
 
-See the section "Diagnostic runs" below. It is filled in when the runs of `configs/experiments/diagnose.yaml`
-finish.
+These runs are not tuning and do not replace any appendix result; all of them are reported.
+Figure: `results/figures/appendix/gap_diagnose.png`.
+
+| run | change | final acc. | alpha mean (last 500) | iota end | checks |
+|---|---|---|---|---|---|
+| LeNet / CIFAR-10 FedASMU (appendix) | none (SGD-consistent sign) | 0.448 | 0.87 | +0.67 | 27/27 |
+| LeNet / CIFAR-10 FedASMU, printed sign | Eq. 3 sign exactly as printed in the appendix | 0.362 | 0.00 | -9.75 | 28/28 |
+| LeNet / CIFAR-10 FedASMU-DA | Eq. 3 off (lambda, sigma, iota fixed) | 0.523 | 0.13 | 0.01 | - |
+| LeNet / CIFAR-10 FedBuff / FedAvg (appendix) | - | 0.540 / 0.504 | - | - | - |
+| CNN / CIFAR-10 FedASMU (appendix) | none | 0.537 | 0.19 | +0.019 | 27/27 |
+| CNN / CIFAR-10 FedASMU, printed sign | Eq. 3 sign as printed | 0.550 | 0.04 | -0.001 | 28/28 |
+| CNN / CIFAR-10 FedBuff (appendix) | - | 0.564 | - | - | - |
+
+Findings:
+- With the sign printed in the paper, iota runs away the other way. On LeNet / CIFAR-10 (eta_iota = 0.1) it
+  reaches -9.7 and alpha drops to 0 after about 400 updates. From then on, the global model no longer changes:
+  the accuracy stays at 0.362.
+- With the SGD-consistent sign, iota grows and alpha rises to 0.87 (accuracy 0.448).
+- With Eq. 3 switched off, alpha stays at 0.13-0.16 and the accuracy is 0.523. This is our best FedASMU
+  variant on this workload and is above the paper's FedASMU (0.486), but still below FedBuff (0.540).
+- On CNN / CIFAR-10, where eta_iota is 1000x smaller (1e-4), the drift is slow and both signs end within
+  1.3 pp (0.537 / 0.550). Both are still below FedBuff (0.564).
+- Conclusion: the Eq. 3 control-parameter update, as specified, drifts monotonically in either sign
+  convention, because its gradient estimate is not zero-mean under non-IID data. With the paper's large
+  eta_iota (LeNet / CIFAR-10) this dominates the result. Neither convention reproduces the paper's smooth
+  0.486 curve, and none of the variants beats FedBuff. The paper's result therefore depends on something the
+  paper does not state: the initial values or mu_alpha, a clipping of the control parameters, or the
+  smoothing of the plotted curves.
 
 <!-- tables -->
 
@@ -113,7 +139,7 @@ Paper times are read from the digitised paper curves; n = received local updates
 | alexnet-cifar10 | 0.4 | 13,810 | 39,920 (700) | 29,402 | 61,679 (1,150) | 162,234 | 34,801 (450) | 11.7 | 0.87 |
 | vgg11-cifar10 | 0.45 | 44,059 | 32,684 (650) | 116,204 | 53,433 (1,100) | 341,245 | 32,335 (450) | 7.7 | 0.99 |
 | textcnn-imdb | 0.85 | 3,608 | - (-) | 7,872 | - (-) | 13,960 | - (-) | 3.9 | - |
-| alexnet-cifar100 | 0.12 | 12,783 | - (-) | 28,351 | - (-) | 93,991 | - (-) | 7.4 | - |
+| alexnet-cifar100 | 0.12 | 12,783 | 102,912 (1,800) | 28,351 | - (-) | 93,991 | - (-) | 7.4 | - |
 | vgg11-cifar100 | 0.12 | 84,226 | 65,550 (1,300) | 249,017 | 99,668 (2,050) | - | 68,322 (950) | - | 1.04 |
 | lenet5-fmnist | 0.7 | 8,601 | 10,744 (700) | 30,015 | 14,474 (950) | 66,605 | 11,710 (500) | 7.7 | 1.09 |
 
@@ -132,6 +158,6 @@ Roughness = mean |Δ accuracy| between 50 equally spaced points in the second ha
 | alexnet-cifar10 | 0.0005 | 0.0077 | 0.0006 | 0.0064 | 0.0018 | 0.0059 | 0.192 | 0.019 | 1.000 |
 | vgg11-cifar10 | 0.0004 | 0.0042 | 0.0010 | 0.0053 | 0.0031 | 0.0040 | 0.186 | 0.016 | 1.000 |
 | textcnn-imdb | 0.0001 | 0.0015 | 0.0001 | 0.0105 | 0.0001 | 0.0157 | 0.181 | 0.016 | 0.905 |
-| alexnet-cifar100 | 0.0002 | - | 0.0002 | - | 0.0006 | - | - | - | - |
+| alexnet-cifar100 | 0.0002 | 0.0115 | 0.0002 | - | 0.0006 | - | 0.218 | 0.032 | 1.000 |
 | vgg11-cifar100 | 0.0005 | 0.0081 | 0.0027 | 0.0039 | 0.0014 | 0.0046 | 0.229 | 0.032 | 0.998 |
 | lenet5-fmnist | 0.0006 | 0.0105 | 0.0008 | 0.0065 | 0.0015 | 0.0120 | 0.168 | 0.012 | 0.999 |

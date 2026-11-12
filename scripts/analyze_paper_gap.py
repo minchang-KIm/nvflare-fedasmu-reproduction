@@ -49,6 +49,49 @@ def jitter(t, a):
     return float(np.mean(np.abs(np.diff(np.interp(xs, t, a)))))
 
 
+def diagnose(pc, axes):
+    """Diagnostic runs (configs/experiments/diagnose.yaml) next to the appendix runs."""
+    sets = {"lenet5-cifar10": [("appendix_lenet5_cifar10_fedasmu_s0", "FedASMU (default sign)", "#ff0000"),
+                               ("diagnose_lenet5_cifar10_fedasmu-psign_s0", "FedASMU (printed sign)", "#8b0000"),
+                               ("diagnose_lenet5_cifar10_fedasmu_da_s0", "FedASMU-DA (Eq. 3 off)", "#ff9900"),
+                               ("appendix_lenet5_cifar10_fedbuff_s0", "FedBuff", "#4c50f1"),
+                               ("appendix_lenet5_cifar10_fedavg_s0", "FedAvg", "#ff5b2e")],
+            "cnn-cifar10": [("appendix_cnn_cifar10_fedasmu_s0", "FedASMU (default sign)", "#ff0000"),
+                            ("diagnose_cnn_cifar10_fedasmu-psign_s0", "FedASMU (printed sign)", "#8b0000"),
+                            ("appendix_cnn_cifar10_fedbuff_s0", "FedBuff", "#4c50f1"),
+                            ("appendix_cnn_cifar10_fedavg_s0", "FedAvg", "#ff5b2e")]}
+    if not all(os.path.exists(os.path.join(MET, r, "eval.csv")) for v in sets.values() for r, _, _ in v):
+        return
+    f, ax = plt.subplots(2, 2, figsize=(13, 9))
+    for c, (wl, runs) in enumerate(sets.items()):
+        d = pc[(pc.workload == wl) & (pc.method == "FedASMU")].sort_values("time_s")
+        ax[0, c].plot(d.time_s, d.accuracy, ls="--", color="k", lw=1.5, label="FedASMU paper (digitised)")
+        for r, lab, col in runs:
+            ev = pd.read_csv(os.path.join(MET, r, "eval.csv")).drop_duplicates(["received", "global_version"], keep="last")
+            ax[0, c].plot(ev.vtime, ev.test_acc, color=col, lw=1, label=lab)
+            u = os.path.join(MET, r, "updates.csv")
+            if "fedasmu" in r:
+                u = pd.read_csv(u)
+                u = u[u.accepted == True]  # noqa: E712
+                ax[1, c].plot(u.received, u.alpha.rolling(100).mean(), color=col, label=lab)
+        A = axes[wl]
+        ax[0, c].set_xlim(A["xlim"][0], 130000)
+        ax[0, c].set_ylim(A["ylim"][0], max(A["ylim"][1], 0.6))
+        ax[0, c].set_xlabel("Time (s)")
+        ax[0, c].set_ylabel("Accuracy")
+        ax[0, c].set_title(f"{wl}: accuracy (paper x axis cut at 130 k s)", fontsize=10)
+        ax[0, c].legend(fontsize=7, loc="lower right")
+        ax[1, c].set_xlabel("received updates")
+        ax[1, c].set_ylabel("alpha (100-update mean)")
+        ax[1, c].set_title(f"{wl}: server mixing weight alpha", fontsize=10)
+        ax[1, c].legend(fontsize=7)
+    f.suptitle("Diagnostic runs: the Eq. 3 control-parameter drift (seed 0, everything else as the appendix runs)",
+               fontsize=11)
+    f.tight_layout()
+    f.savefig(os.path.join(FIG, "gap_diagnose.png"), dpi=100)
+    plt.close(f)
+
+
 def main():
     S = yaml.safe_load(open(os.path.join(ROOT, "configs/common/paper_settings.yaml")))
     pc = pd.read_csv(os.path.join(PA, "curves.csv"))
@@ -149,6 +192,8 @@ def main():
         f.tight_layout()
         f.savefig(os.path.join(FIG, f"overlay_{g}.png"), dpi=100)
         plt.close(f)
+
+    diagnose(pc, axes)
 
     # ---- report table --------------------------------------------------------
     def fmt(v, p=0):

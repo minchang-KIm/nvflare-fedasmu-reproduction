@@ -1,0 +1,289 @@
+{
+ "run_id": "diagnose_cnn_cifar10_fedasmu-psign_s0",
+ "algorithm": "fedasmu",
+ "run_status": "COMPLETED",
+ "rows": 5000,
+ "all_passed": true,
+ "checks": [
+  {
+   "id": "S0",
+   "what": "at most m' = 10 devices train at the same time (triggered every T)",
+   "source": "Algorithm 1 l.1-6",
+   "n": 102,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "devices in training at evaluation points: max 9, mean 8.5"
+  },
+  {
+   "id": "S1",
+   "what": "staleness tau = t - o + 1",
+   "source": "Algorithm 1 l.9",
+   "n": 5000,
+   "max_err": 0.0,
+   "tol": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "S2",
+   "what": "update discarded iff tau > 99",
+   "source": "Algorithm 1 l.9-10",
+   "n": 5000,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "discarded: 0"
+  },
+  {
+   "id": "S3",
+   "what": "xi = lam/(sqrt(t)(t-o+1)^sig) + iota",
+   "source": "Eq. 2",
+   "n": 5000,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "S4",
+   "what": "alpha = mu*xi/(1+mu*xi)",
+   "source": "Eq. 2",
+   "n": 5000,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "S5",
+   "what": "new global model equals (1-alpha) w_t + alpha w_i element by element (relative residual)",
+   "source": "Eq. 1",
+   "n": 5000,
+   "max_err": 0.0,
+   "tol": 1e-06,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "S5b",
+   "what": "mixing ratio measured on the tensors |w_{t+1}-w_t|/|w_i-w_t| = alpha, within float32 rounding bound 2^-24 |w_{t+1}|/|w_i-w_t|",
+   "source": "Eq. 1",
+   "n": 5000,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "max |ratio-alpha| 7.7e-08, max bound 4.3e-06"
+  },
+  {
+   "id": "S6",
+   "what": "dF/dlam, dF/dsig, dF/diota (chain rule through alpha)",
+   "source": "Eq. 3 + appendix A",
+   "n": 4900,
+   "max_err": 1.7567006346702111e-16,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "S7",
+   "what": "lam/sig/iota <- x - eta_x * dF/dx",
+   "source": "Eq. 3",
+   "n": 4900,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": "first upload of a device has no previous update: 100 rows, parameters unchanged (OK)"
+  },
+  {
+   "id": "S8",
+   "what": "per-device lam/sig: value before an upload == value after its previous upload; start at lam0/sig0",
+   "source": "Algorithm 1 (state per device)",
+   "n": 5000,
+   "max_err": 0.0,
+   "tol": 1e-12,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D1",
+   "what": "request slot l* in 1..L-1 (L = 5)",
+   "source": "Algorithm 2 l.4",
+   "n": 5000,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D2",
+   "what": "fresh model merged only if it is newer (g > o)",
+   "source": "Algorithm 2 l.6-7",
+   "n": 4355,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "requests 5000, merged 4355, no newer model 645"
+  },
+  {
+   "id": "D3",
+   "what": "phi = gamma/sqrt(g) * (1 - upsilon/sqrt(g-o+1))",
+   "source": "Formula 8",
+   "n": 4355,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D4",
+   "what": "beta = mu*phi/(1+mu*phi)",
+   "source": "Formula 8",
+   "n": 4355,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D5",
+   "what": "local model after merge equals (1-beta) w_local + beta w_g element by element (relative residual)",
+   "source": "Formula 7",
+   "n": 4355,
+   "max_err": 0.0,
+   "tol": 1e-06,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D5b",
+   "what": "mixing ratio measured on the tensors = beta, within float32 rounding bound",
+   "source": "Formula 7",
+   "n": 4355,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "max |ratio-beta| 1.1e-07, max bound 4.5e-06"
+  },
+  {
+   "id": "D6",
+   "what": "dF/dgamma, dF/dupsilon",
+   "source": "Formula 9 + appendix A",
+   "n": 4355,
+   "max_err": 1.734723475976807e-18,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D7",
+   "what": "gamma/upsilon <- x - eta_x * dF/dx",
+   "source": "Formula 9",
+   "n": 4355,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D8",
+   "what": "per-device gamma: value before a merge == value after its previous merge; start at gamma0",
+   "source": "Algorithm 2 (device state)",
+   "n": 4355,
+   "max_err": 0.0,
+   "tol": 1e-12,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "D9",
+   "what": "reward R = loss(before merge) - loss(after merge), same mini-batch",
+   "source": "Algorithm 2 l.11",
+   "n": 4355,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": "R > 0 (merge lowered the loss) in 32.1% of merges"
+  },
+  {
+   "id": "D10",
+   "what": "device baseline b <- (1-rho) b + rho R (starts at 0)",
+   "source": "Algorithm 2 l.13",
+   "n": 4355,
+   "max_err": 0.0,
+   "tol": 1e-12,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "Q1",
+   "what": "H(s,a) <- H + phi (R + psi max_a' H(s',a') - H)",
+   "source": "Eq. 6",
+   "n": 4273,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "Q2",
+   "what": "action add/stay/minus moves l* by +1/0/-1; device requests at the new l*",
+   "source": "Eq. 6 (actions)",
+   "n": 4273,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "Q3",
+   "what": "epsilon-greedy: greedy choices >= 1 - epsilon = 0.90 (minus ties)",
+   "source": "Eq. 6 (policy)",
+   "n": 4273,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "greedy share 94.1%"
+  },
+  {
+   "id": "M1",
+   "what": "LSTM decides the first request slot of each device once; the device uses it",
+   "source": "Eq. 5",
+   "n": 100,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "100 devices; later trainings use Q-learning (4900 rows)"
+  },
+  {
+   "id": "M2",
+   "what": "sampled decisions s_l: first s_l = 1 gives l*; P(l*) sums to 1",
+   "source": "Eq. 5",
+   "n": 100,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "M3",
+   "what": "advantage = R - b (moving-average baseline)",
+   "source": "Eq. 5 / REINFORCE",
+   "n": 82,
+   "max_err": 0.0,
+   "tol": 1e-09,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "M4",
+   "what": "policy-gradient step raises log P(chosen slots) when R > b and lowers it when R < b",
+   "source": "Eq. 5 / REINFORCE",
+   "n": 82,
+   "max_err": null,
+   "tol": null,
+   "ok": true,
+   "note": "direction correct in 100.0% of updates"
+  }
+ ]
+}

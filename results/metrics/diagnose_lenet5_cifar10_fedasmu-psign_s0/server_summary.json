@@ -1,0 +1,18 @@
+{
+ "status": "COMPLETED",
+ "algorithm": "fedasmu",
+ "received": 5000,
+ "accepted": 5000,
+ "discarded": 0,
+ "failed": 0,
+ "rejected_nonfinite": 0,
+ "global_version": 5000,
+ "aggregations": 5000,
+ "vtime": 76911.64601460058,
+ "wall": 2331.9466168880463,
+ "total_steps": 264175,
+ "total_samples": 12546685,
+ "error": null,
+ "meta_updates": 332,
+ "meta_pretrained_records": 83
+}

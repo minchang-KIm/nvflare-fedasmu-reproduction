@@ -152,3 +152,16 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 - Profile `appendix`: 12 workloads × {FedASMU, FedBuff, FedAvg}, seed 0, paper budgets. The LSTM is pre-trained on the request history of the earlier FedASMU run of the same workload. Two queues run at the same time, one on each host, one run at a time per host; the development-host queue waits whenever any GPU has less than 8000 MiB free.
 - `scripts/live_sync.sh` redraws `results/figures/appendix/*.png` every 5 min (paper appendix Fig. 3–6 layout) and verifies runs as they complete. Every 60 min, and whenever a run completes, it commits, pushes to node2 and publishes the sanitized history to GitHub. Each sync is recorded in `logs/live_sync.log`.
 - 2026-11-12, figures redrawn as paper vs ours. `scripts/extract_paper_panels.py` crops the 12 panels of the paper's appendix Figures 3–6 from arXiv 2312.05770v1 (CC BY 4.0, cropped only) into `results/figures/paper_appendix/`. It recovers each panel's axes from the PDF itself: the frame is found in a 300-dpi render, and the tick labels come from the PDF text layer, fitted linearly (residual about 1e-5). The limits are written to `axes.json`. `scripts/appendix_figures.py` now places the paper panel on the left and our run on the right, on the paper's exact x/y limits, ticks and units ("Time (s)", "Accuracy"), using the paper's colours and markers. Where our data leave those axes, the panel says so: our accuracy often exceeds the paper's y-max (e.g. LeNet / CIFAR-10, AlexNet / CIFAR-10), and FedAvg runs past 100 k s on IMDb and FMNIST. `appendix_figN_fullrange.png` repeats each figure with the right panel's limits widened just enough to show all data.
+- 2026-11-12, re-check of the paper gap.
+  - `scripts/check_paper_settings.py`: every completed appendix run matches the setting the paper states (Tables 5–6, m, m′, τ, T, budgets, 5× device spread), with the same split, initial weights and device profiles across methods.
+  - `scripts/digitize_paper_curves.py` reads the paper's curves from the PDF vector paths. Each final point is within 0.005 of Tables 1–2.
+  - `scripts/analyze_paper_gap.py` and `results/reports/paper_gap_analysis.md` explain the differences:
+    - (a) the paper plots a fixed 450 k s window;
+    - (b) the paper's FedAvg slowdown (7–14×) exceeds what its own time model allows (≤ 5×, expected 1.55×);
+    - (c) the paper's curves are 10–100× smoother, which suggests smoothing;
+    - (d) the Eq. 3 control-parameter gradient estimate has a constant sign under non-IID data, so ι drifts.
+  - Diagnostic runs (`diagnose` profile, seed 0):
+    - printed Eq. 3 sign: ι → −9.7, α → 0, LeNet / CIFAR-10 accuracy frozen at 0.362;
+    - Eq. 3 off: 0.523;
+    - default: 0.448;
+    - FedBuff: 0.540.
