@@ -8,5 +8,5 @@ alexnet-cifar10: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
 vgg11-cifar10: FedASMU: COMPLETED; FedAvg: not started; FedBuff: RUNNING
 textcnn-imdb: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
 alexnet-cifar100: FedASMU: not started; FedAvg: not started; FedBuff: not started
-vgg11-cifar100: FedASMU: RUNNING; FedAvg: not started; FedBuff: not started
+vgg11-cifar100: FedASMU: COMPLETED; FedAvg: not started; FedBuff: RUNNING
 lenet5-fmnist: FedASMU: COMPLETED; FedAvg: COMPLETED; FedBuff: COMPLETED
