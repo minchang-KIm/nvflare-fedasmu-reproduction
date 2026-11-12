@@ -1,0 +1,21 @@
+## Server, one received update (Eq. 3 -> Eq. 2 -> Eq. 1)
+received=29 device=65 t=28 o=20 staleness=9
+Eq.3  lam 1 -> 1, sig 0.5 -> 0.5, iota 0.01 -> 0.0100012   (g.dprev=-0.009892)
+Eq.2  xi = 1/(sqrt(28)*9^0.5) + 0.0100012 = 0.0729953;  alpha = 10*xi/(1+10*xi) = 0.421950
+Eq.1  measured |w_t+1 - w_t| / |w_i - w_t| = 0.421950  (alpha 0.421950)
+
+## Device, one fresh-model merge (Formula 8 -> 7 -> 9, reward)
+received=6 device=65 started from version o=0, request after epoch 4 (meta), received fresh version g=1
+F8  phi = 1/sqrt(1)*(1-0.5/sqrt(2)) = 0.646447;  beta = 0.866032
+F7  measured |w_after - w_local| / |w_g - w_local| = 0.866032  (beta 0.866032)
+F9  gamma 1 -> 0.999999, upsilon 0.5 -> 0.500001
+reward R = 4.5537 - 4.6020 = -0.0482
+
+## Device Q-learning, one update (Eq. 6)
+device=65 state l*=4 action=add -> l*=4 (greedy)
+H 0.00000 -> -0.02520 = H + 0.1*(-0.2520 + 0.9*0.00000 - H)
+
+## Server LSTM meta model, one REINFORCE update (Eq. 5)
+device=65 features=[0.513514, 0.2585] P(l*)=[0.515592, 0.247974, 0.120499, 0.115934] decisions=[0, 0, 0] -> l*=4
+R=-0.0482 b=0.2142 advantage=-0.2625; log P(decisions) -2.15473 -> -2.15554
+
