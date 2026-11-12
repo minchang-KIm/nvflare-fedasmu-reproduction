@@ -57,13 +57,23 @@
   },
   {
    "id": "S5",
-   "what": "global model w_{t+1} = (1-alpha) w_t + alpha w_i, measured on the tensors: |w_{t+1}-w_t|/|w_i-w_t| = alpha",
+   "what": "new global model equals (1-alpha) w_t + alpha w_i element by element (relative residual)",
+   "source": "Eq. 1",
+   "n": 5000,
+   "max_err": 0.0,
+   "tol": 1e-06,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "S5b",
+   "what": "mixing ratio measured on the tensors |w_{t+1}-w_t|/|w_i-w_t| = alpha (float32 norms)",
    "source": "Eq. 1",
    "n": 5000,
    "max_err": 1.2930333713745412e-06,
-   "tol": 0.0001,
+   "tol": 0.001,
    "ok": true,
-   "note": "max relative residual of the whole parameter vector 0.0e+00"
+   "note": "run made before the rounding bound was logged; float32 measurement error grows with |w|/|w_i-w_t|"
   },
   {
    "id": "S6",
@@ -137,7 +147,7 @@
   },
   {
    "id": "D5",
-   "what": "local model after merge = (1-beta) w_local + beta w_g, measured on the tensors",
+   "what": "local model after merge = (1-beta) w_local + beta w_g, mixing ratio measured on the tensors (float32 norms)",
    "source": "Formula 7",
    "n": 4410,
    "max_err": 8.74088741387169e-08,

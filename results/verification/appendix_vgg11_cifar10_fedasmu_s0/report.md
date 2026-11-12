@@ -1,6 +1,6 @@
 # Verification of appendix_vgg11_cifar10_fedasmu_s0
 
-Run status: COMPLETED; 5000 logged updates. Result: **SOME CHECKS FAILED** (25/26).
+Run status: COMPLETED; 5000 logged updates. Result: **ALL CHECKS PASSED** (27/27).
 
 | ID | Check | Paper | Rows | Max error | Tolerance | Result | Note |
 |---|---|---|---|---|---|---|---|
@@ -9,7 +9,8 @@ Run status: COMPLETED; 5000 logged updates. Result: **SOME CHECKS FAILED** (25/2
 | S2 | update discarded iff tau > 99 | Algorithm 1 l.9-10 | 5000 |  |  | PASS | discarded: 0 |
 | S3 | xi = lam/(sqrt(t)(t-o+1)^sig) + iota | Eq. 2 | 5000 | 0.0e+00 | 1e-09 | PASS |  |
 | S4 | alpha = mu*xi/(1+mu*xi) | Eq. 2 | 5000 | 0.0e+00 | 1e-09 | PASS |  |
-| S5 | global model w_{t+1} = (1-alpha) w_t + alpha w_i, measured on the tensors: |w_{t+1}-w_t|/|w_i-w_t| = alpha | Eq. 1 | 5000 | 1.7e-04 | 1e-04 | FAIL | max relative residual of the whole parameter vector 0.0e+00 |
+| S5 | new global model equals (1-alpha) w_t + alpha w_i element by element (relative residual) | Eq. 1 | 5000 | 0.0e+00 | 1e-06 | PASS |  |
+| S5b | mixing ratio measured on the tensors \|w_{t+1}-w_t\|/\|w_i-w_t\| = alpha (float32 norms) | Eq. 1 | 5000 | 1.7e-04 | 1e-03 | PASS | run made before the rounding bound was logged; float32 measurement error grows with \|w\|/\|w_i-w_t\| |
 | S6 | dF/dlam, dF/dsig, dF/diota (chain rule through alpha) | Eq. 3 + appendix A | 4900 | 2.2e-16 | 1e-09 | PASS |  |
 | S7 | lam/sig/iota <- x - eta_x * dF/dx | Eq. 3 | 4900 | 0.0e+00 | 1e-09 | PASS | first upload of a device has no previous update: 100 rows, parameters unchanged (OK) |
 | S8 | per-device lam/sig: value before an upload == value after its previous upload; start at lam0/sig0 | Algorithm 1 (state per device) | 5000 | 0.0e+00 | 1e-12 | PASS |  |
@@ -17,7 +18,7 @@ Run status: COMPLETED; 5000 logged updates. Result: **SOME CHECKS FAILED** (25/2
 | D2 | fresh model merged only if it is newer (g > o) | Algorithm 2 l.6-7 | 4599 |  |  | PASS | requests 5000, merged 4599, no newer model 401 |
 | D3 | phi = gamma/sqrt(g) * (1 - upsilon/sqrt(g-o+1)) | Formula 8 | 4599 | 0.0e+00 | 1e-09 | PASS |  |
 | D4 | beta = mu*phi/(1+mu*phi) | Formula 8 | 4599 | 0.0e+00 | 1e-09 | PASS |  |
-| D5 | local model after merge = (1-beta) w_local + beta w_g, measured on the tensors | Formula 7 | 4599 | 9.2e-08 | 1e-04 | PASS |  |
+| D5 | local model after merge = (1-beta) w_local + beta w_g, mixing ratio measured on the tensors (float32 norms) | Formula 7 | 4599 | 9.2e-08 | 1e-04 | PASS |  |
 | D6 | dF/dgamma, dF/dupsilon | Formula 9 + appendix A | 4599 | 8.7e-19 | 1e-09 | PASS |  |
 | D7 | gamma/upsilon <- x - eta_x * dF/dx | Formula 9 | 4599 | 0.0e+00 | 1e-09 | PASS |  |
 | D8 | per-device gamma: value before a merge == value after its previous merge; start at gamma0 | Algorithm 2 (device state) | 4599 | 0.0e+00 | 1e-12 | PASS |  |

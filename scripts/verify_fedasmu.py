@@ -77,6 +77,14 @@ def rel_err(a, b):
 def verify_fedasmu(rep, tr, cfg):
     f, L = cfg["fedasmu"], cfg["local"]["epochs"]
     mu_a, mu_b = f["mu_alpha"], f["mu_beta"]
+    # Uploads rejected because their weights were NaN/Inf never reach the aggregation, but the device state
+    # (gamma, upsilon, b, Q table) still changed during that training.  Newer runs log them in trace.csv
+    # (slot_src = rejected:nonfinite); for older runs they are taken from updates.csv.
+    rej_rows = tr.slot_src.astype(str).eq("rejected:nonfinite")
+    up = pd.read_csv(os.path.join(MET, cfg["run_id"], "updates.csv"))
+    rejected = up[up.slot_src.astype(str).eq("rejected:nonfinite")][["received", "device"]]
+    traced_rej = bool(rej_rows.any())
+    tr_all, tr = tr, tr[~rej_rows]
     acc = tr[_b(tr.accepted)]
     # ---------------- server: triggering (Algorithm 1 lines 1-6) ----------------
     ev = pd.read_csv(os.path.join(MET, cfg["run_id"], "eval.csv"))
@@ -93,9 +101,17 @@ def verify_fedasmu(rep, tr, cfg):
     rep.check("S3", "xi = lam/(sqrt(t)(t-o+1)^sig) + iota", "Eq. 2", len(acc), rel_err(acc.xi, xi), 1e-9)
     al = mix(mu_a, xi)
     rep.check("S4", "alpha = mu*xi/(1+mu*xi)", "Eq. 2", len(acc), rel_err(acc.alpha, al), 1e-9)
-    rep.check("S5", "global model w_{t+1} = (1-alpha) w_t + alpha w_i, measured on the tensors: |w_{t+1}-w_t|/|w_i-w_t| = alpha",
-              "Eq. 1", len(acc), float(np.max(np.abs(acc.eq1_ratio - acc.alpha))), 1e-4,
-              note=f"max relative residual of the whole parameter vector {acc.eq1_resid.max():.1e}")
+    rep.check("S5", "new global model equals (1-alpha) w_t + alpha w_i element by element (relative residual)",
+              "Eq. 1", len(acc), float(acc.eq1_resid.max()), 1e-6)
+    d1 = np.abs(acc.eq1_ratio - acc.alpha)
+    if "eq1_bound" in acc and acc.eq1_bound.notna().all():
+        rep.check("S5b", "mixing ratio measured on the tensors |w_{t+1}-w_t|/|w_i-w_t| = alpha, within float32 rounding "
+                  "bound 2^-24 |w_{t+1}|/|w_i-w_t|", "Eq. 1", len(acc), ok=bool((d1 <= acc.eq1_bound * 1.01 + 1e-9).all()),
+                  note=f"max |ratio-alpha| {d1.max():.1e}, max bound {acc.eq1_bound.max():.1e}")
+    else:
+        rep.check("S5b", "mixing ratio measured on the tensors |w_{t+1}-w_t|/|w_i-w_t| = alpha (float32 norms)", "Eq. 1",
+                  len(acc), float(d1.max()), 1e-3,
+                  note="run made before the rounding bound was logged; float32 measurement error grows with |w|/|w_i-w_t|")
     g3 = acc[acc.g_dot_prev.notna()]
     c = mu_a / (1 + mu_a * g3.prev_xi) ** 2
     den = np.sqrt(np.maximum(g3.prev_t, 1)) * g3.prev_tau ** g3.sig_before
@@ -130,8 +146,16 @@ def verify_fedasmu(rep, tr, cfg):
     phi = phi_paper(m.gamma_before, m.upsilon_before, m.fresh_version, m.o)
     rep.check("D3", "phi = gamma/sqrt(g) * (1 - upsilon/sqrt(g-o+1))", "Formula 8", len(m), rel_err(m.phi, phi), 1e-9)
     rep.check("D4", "beta = mu*phi/(1+mu*phi)", "Formula 8", len(m), rel_err(m.beta, mix(mu_b, phi)), 1e-9)
-    rep.check("D5", "local model after merge = (1-beta) w_local + beta w_g, measured on the tensors", "Formula 7", len(m),
-              float(np.max(np.abs(m.eq7_ratio - m.beta))), 1e-4)
+    d7 = np.abs(m.eq7_ratio - m.beta)
+    if "eq7_resid" in m and m.eq7_resid.notna().all():
+        rep.check("D5", "local model after merge equals (1-beta) w_local + beta w_g element by element (relative residual)",
+                  "Formula 7", len(m), float(m.eq7_resid.max()), 1e-6)
+        rep.check("D5b", "mixing ratio measured on the tensors = beta, within float32 rounding bound", "Formula 7", len(m),
+                  ok=bool((d7 <= m.eq7_bound * 1.01 + 1e-9).all()), note=f"max |ratio-beta| {d7.max():.1e}, max bound {m.eq7_bound.max():.1e}")
+    else:
+        rep.check("D5", "local model after merge = (1-beta) w_local + beta w_g, mixing ratio measured on the tensors (float32 norms)",
+                  "Formula 7", len(m), float(d7.max()), 1e-4,
+                  note="run made before the element-wise residual and rounding bound were logged" if d7.max() > 1e-4 else "")
     s = np.sqrt(m.fresh_version - m.o + 1)
     cc = mu_b / (np.sqrt(np.maximum(m.fresh_version, 1)) * (1 + mu_b * np.maximum(m.phi, 0)) ** 2)
     dg, du = m.grad_dot * cc * (1 - m.upsilon_before / s), -m.grad_dot * cc * m.gamma_before / s
@@ -140,23 +164,40 @@ def verify_fedasmu(rep, tr, cfg):
     e = max(rel_err(m.gamma, m.gamma_before - f["eta_gamma"] * m.d_gamma),
             rel_err(m.upsilon, m.upsilon_before - f["eta_upsilon"] * m.d_upsilon))
     rep.check("D7", "gamma/upsilon <- x - eta_x * dF/dx", "Formula 9", len(m), e, 1e-9)
-    errs = []
-    for _, d in m.sort_values("received").groupby("device"):
-        if len(d) > 1:
-            errs.append(np.max(np.abs(d.gamma_before.values[1:] - d.gamma.values[:-1])))
-    first = m.sort_values("received").groupby("device").head(1)
+    # device-state hand-over: include traced rejected trainings; for older runs skip the hand-over that spans one
+    mdev = tr_all[_b(tr_all.merged)].sort_values("received")
+
+    def spans_rejected(dev, r0, r1):
+        x = rejected[rejected.device == dev]
+        return bool(((x.received > r0) & (x.received < r1)).any())
+    errs, skipped = [], 0
+    for dev, d in mdev.groupby("device"):
+        for i in range(1, len(d)):
+            if not traced_rej and spans_rejected(dev, d.received.values[i - 1], d.received.values[i]):
+                skipped += 1
+                continue
+            errs.append(abs(d.gamma_before.values[i] - d.gamma.values[i - 1]))
+    first = mdev.groupby("device").head(1)
     init_ok = np.allclose(first.gamma_before, f["gamma0"]) and np.allclose(first.upsilon_before, f["upsilon0"])
     rep.check("D8", "per-device gamma: value before a merge == value after its previous merge; start at gamma0",
-              "Algorithm 2 (device state)", len(m), max(errs) if errs else 0.0, 1e-12, ok=(not errs or max(errs) <= 1e-12) and init_ok)
+              "Algorithm 2 (device state)", len(mdev), max(errs) if errs else 0.0, 1e-12, ok=(not errs or max(errs) <= 1e-12) and init_ok,
+              note=(f"{len(rejected)} training(s) rejected as non-finite; " + (f"{skipped} hand-over(s) spanning them not checkable "
+                    "(run made before rejected trainings were traced)" if skipped else "included")) if len(rejected) else "")
     rep.check("D9", "reward R = loss(before merge) - loss(after merge), same mini-batch", "Algorithm 2 l.11", len(m),
               rel_err(m.reward, m.loss_before - m.loss_after), 1e-9,
               note=f"R > 0 (merge lowered the loss) in {(m.reward > 0).mean() * 100:.1f}% of merges")
-    errs, bad_init = [], False
-    for _, d in m.sort_values("received").groupby("device"):
-        b_prev = np.concatenate([[0.0], d.b.values[:-1]])
-        errs.append(np.max(np.abs(d.b.values - ((1 - f["rho"]) * b_prev + f["rho"] * d.reward.values))))
-    rep.check("D10", "device baseline b <- (1-rho) b + rho R (starts at 0)", "Algorithm 2 l.13", len(m),
-              max(errs) if errs else float("nan"), 1e-12)
+    errs, skipped = [], 0
+    for dev, d in mdev.groupby("device"):
+        b_prev = 0.0
+        for i in range(len(d)):
+            if i and not traced_rej and spans_rejected(dev, d.received.values[i - 1], d.received.values[i]):
+                skipped += 1
+            else:
+                errs.append(abs(d.b.values[i] - ((1 - f["rho"]) * b_prev + f["rho"] * d.reward.values[i])))
+            b_prev = d.b.values[i]
+    rep.check("D10", "device baseline b <- (1-rho) b + rho R (starts at 0)", "Algorithm 2 l.13", len(mdev),
+              max(errs) if errs else float("nan"), 1e-12,
+              note=f"{skipped} update(s) after a rejected training not checkable (older run)" if skipped else "")
     # ---------------- Q-learning, Eq. 6 ----------------
     q = tr[tr.q_h_after.notna()]
     tgt = q.q_h_before + f["q_phi"] * (q.reward + f["q_psi"] * q.q_max_next - q.q_h_before)
@@ -326,7 +367,8 @@ def verify(run_id):
         for r in rep.rows:
             e = "" if r["max_err"] is None else f"{r['max_err']:.1e}"
             t = "" if r["tol"] is None else f"{r['tol']:.0e}"
-            fh.write(f"| {r['id']} | {r['what']} | {r['source']} | {r['n']} | {e} | {t} | {'PASS' if r['ok'] else 'FAIL'} | {r['note']} |\n")
+            esc = lambda x: str(x).replace("|", "\\|")
+            fh.write(f"| {r['id']} | {esc(r['what'])} | {r['source']} | {r['n']} | {e} | {t} | {'PASS' if r['ok'] else 'FAIL'} | {esc(r['note'])} |\n")
         fh.write("\n## Example log rows\n\n```\n" + open(os.path.join(od, "evidence.txt")).read() + "```\n")
     print(f"{run_id}: {'PASS' if ok else 'FAIL'} {sum(r['ok'] for r in rep.rows)}/{len(rep.rows)}")
     return ok

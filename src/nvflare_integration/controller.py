@@ -62,10 +62,11 @@ TRACE_FIELDS = [
     "received", "vtime", "device", "algorithm", "t", "o", "staleness", "accepted",
     # server, Eq. 2-3 and Eq. 1
     "lam_before", "sig_before", "iota_before", "prev_t", "prev_tau", "prev_xi", "g_dot_prev",
-    "grad_lam", "grad_sig", "grad_iota", "lam", "sig", "iota", "xi", "alpha", "eq1_ratio", "eq1_resid",
+    "grad_lam", "grad_sig", "grad_iota", "lam", "sig", "iota", "xi", "alpha", "eq1_ratio", "eq1_resid", "eq1_bound",
     # device, Formula 7-9 and reward
     "slot_src", "request_after", "fresh_version", "merged", "gamma_before", "upsilon_before", "phi", "beta",
-    "grad_dot", "d_gamma", "d_upsilon", "gamma", "upsilon", "eq7_ratio", "loss_before", "loss_after", "reward", "b",
+    "grad_dot", "d_gamma", "d_upsilon", "gamma", "upsilon", "eq7_ratio", "eq7_resid", "eq7_bound", "loss_before",
+    "loss_after", "reward", "b",
     # device Q-learning, Eq. 6
     "q_prev_state", "q_action", "q_next_state", "q_greedy", "q_h_before", "q_max_next", "q_h_after",
     # server LSTM meta model, Eq. 5
@@ -445,6 +446,11 @@ class AsyncSimController(Controller):
             row.update(accepted=False, slot_src="rejected:nonfinite", global_version=self.version,
                        aggregations=self.aggregations)
             self.w_upd.writerow(row)
+            if self.cfg.get("trace", True):  # the device state still changed during this training
+                tr = dict(received=row["received"], vtime=row["vtime"], device=d, algorithm=self.algorithm, o=r.o)
+                tr.update({k: stats.get(k) for k in TRACE_FIELDS if k in stats})
+                tr.update(accepted=False, slot_src="rejected:nonfinite")
+                self.w_tr.writerow(tr)
             return
         tr = dict(received=row["received"], vtime=row["vtime"], device=d, algorithm=self.algorithm, o=r.o)
         tr.update({k: stats.get(k) for k in TRACE_FIELDS if k in stats})
@@ -458,8 +464,11 @@ class AsyncSimController(Controller):
             if new is not None:
                 # realised mixing ratio of Eq. 1 measured on the actual tensors (must equal alpha)
                 nw = flat_params(new, self.param_names)
-                den = float(torch.linalg.vector_norm(wi_flat - wt_flat))
-                tr["eq1_ratio"] = float(torch.linalg.vector_norm(nw - wt_flat)) / den if den > 0 else float("nan")
+                # norms in float64 of the float32 tensors; the stored model itself is float32, so the realised
+                # ratio can differ from alpha by at most the rounding of w_{t+1}: 2^-24 |w_{t+1}| / |w_i - w_t|
+                den = float(torch.linalg.vector_norm(wi_flat.double() - wt_flat.double()))
+                tr["eq1_ratio"] = float(torch.linalg.vector_norm(nw.double() - wt_flat.double())) / den if den > 0 else float("nan")
+                tr["eq1_bound"] = 2.0 ** -24 * float(torch.linalg.vector_norm(nw.double())) / den if den > 0 else float("nan")
                 a = info["alpha"]
                 tr["eq1_resid"] = float(torch.linalg.vector_norm(nw - ((1 - a) * wt_flat + a * wi_flat))) / \
                     max(float(torch.linalg.vector_norm(wt_flat)), 1e-12)
