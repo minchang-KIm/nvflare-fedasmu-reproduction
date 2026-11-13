@@ -1,0 +1,43 @@
+# FedASMU hyper-parameter selection on a VALIDATION split (added 2026-11-13).
+# The paper says it "fine-tuned" each approach and reports the best results, but gives none of
+# the FedASMU constants below.  Only those unpublished FedASMU constants are searched; the
+# published values (Tables 5-6), the baselines and every shared setting stay as in appendix.yaml.
+#  - val_frac 0.1: a stratified 10 % of the training set is held out (removed from all devices)
+#    and used for evaluation.  The test set is never read by these runs.
+#  - grid fixed in advance: mu_alpha in {1, 3, 10} x mu_beta in {1, 10} (m10b10 = current default).
+#  - selection rule fixed in advance: highest mean validation accuracy of the last 5 evaluations;
+#    ties (< 0.002) -> earlier time to the workload's target accuracy on validation.
+#  - the chosen setting is then run once on the normal appendix split with test evaluation
+#    (profile 'tuned'), and compared with the existing appendix FedBuff / FedAvg runs.
+overrides: {trace: false, val_frac: 0.1}
+runs:
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: m1b1, fedasmu: {mu_alpha: 1.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: m1b10, fedasmu: {mu_alpha: 1.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: m3b1, fedasmu: {mu_alpha: 3.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: m3b10, fedasmu: {mu_alpha: 3.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: m10b1, fedasmu: {mu_alpha: 10.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: cifar10, algorithm: fedasmu, variant: m10b10, fedasmu: {mu_alpha: 10.0, mu_beta: 10.0}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: m1b1, fedasmu: {mu_alpha: 1.0, mu_beta: 1.0}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: m1b10, fedasmu: {mu_alpha: 1.0, mu_beta: 10.0}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: m3b1, fedasmu: {mu_alpha: 3.0, mu_beta: 1.0}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: m3b10, fedasmu: {mu_alpha: 3.0, mu_beta: 10.0}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: m10b1, fedasmu: {mu_alpha: 10.0, mu_beta: 1.0}}
+  - {model: cnn, dataset: cifar10, algorithm: fedasmu, variant: m10b10, fedasmu: {mu_alpha: 10.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu, variant: m1b1, fedasmu: {mu_alpha: 1.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu, variant: m1b10, fedasmu: {mu_alpha: 1.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu, variant: m3b1, fedasmu: {mu_alpha: 3.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu, variant: m3b10, fedasmu: {mu_alpha: 3.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu, variant: m10b1, fedasmu: {mu_alpha: 10.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: cifar100, algorithm: fedasmu, variant: m10b10, fedasmu: {mu_alpha: 10.0, mu_beta: 10.0}}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu, variant: m1b1, fedasmu: {mu_alpha: 1.0, mu_beta: 1.0}}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu, variant: m1b10, fedasmu: {mu_alpha: 1.0, mu_beta: 10.0}}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu, variant: m3b1, fedasmu: {mu_alpha: 3.0, mu_beta: 1.0}}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu, variant: m3b10, fedasmu: {mu_alpha: 3.0, mu_beta: 10.0}}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu, variant: m10b1, fedasmu: {mu_alpha: 10.0, mu_beta: 1.0}}
+  - {model: cnn, dataset: cifar100, algorithm: fedasmu, variant: m10b10, fedasmu: {mu_alpha: 10.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu, variant: m1b1, fedasmu: {mu_alpha: 1.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu, variant: m1b10, fedasmu: {mu_alpha: 1.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu, variant: m3b1, fedasmu: {mu_alpha: 3.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu, variant: m3b10, fedasmu: {mu_alpha: 3.0, mu_beta: 10.0}}
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu, variant: m10b1, fedasmu: {mu_alpha: 10.0, mu_beta: 1.0}}
+  - {model: lenet5, dataset: fmnist, algorithm: fedasmu, variant: m10b10, fedasmu: {mu_alpha: 10.0, mu_beta: 10.0}}

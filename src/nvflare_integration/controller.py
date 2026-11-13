@@ -103,7 +103,12 @@ class AsyncSimController(Controller):
             torch.cuda.set_device(self.gdev)
         else:
             torch.set_num_threads(cfg.get("server_threads", 12))
-        _, _, xt, yt, ncls = load_tensor_dataset(cfg["dataset"])
+        x_tr, y_tr, xt, yt, ncls = load_tensor_dataset(cfg["dataset"])
+        if cfg.get("val_file"):
+            # tuning runs: evaluate on the held-out part of the training set, never on the test set
+            vi = torch.from_numpy(np.load(cfg["val_file"]))
+            xt, yt = x_tr[vi], y_tr[vi]
+        del x_tr, y_tr
         self.xt, self.yt = xt.to(self.gdev), yt.to(self.gdev)
         self.norm = Normalizer(cfg["dataset"], self.gdev)
         self.model = build_model(cfg["model"], ncls, cfg["dataset"]).to(self.gdev)

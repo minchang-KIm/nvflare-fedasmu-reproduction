@@ -88,16 +88,32 @@ def shared_artifacts(cfg):
     tag = f"{cfg['dataset']}_m{cfg['num_devices']}_a{cfg['dirichlet_alpha']}_s{cfg['seed']}"
     if cfg.get("max_samples_per_device"):
         tag += f"_max{cfg['max_samples_per_device']}"
+    vfrac = float(cfg.get("val_frac") or 0)
+    if vfrac > 0:
+        tag += f"_val{vfrac}"
     pfile = os.path.join(ROOT, "results/manifests", f"partition_{tag}.npz")
+    vfile = pfile.replace("partition_", "valsplit_").replace(".npz", ".npy") if vfrac > 0 else None
     if not os.path.exists(pfile):
         _, y, _, _, _ = load_tensor_dataset(cfg["dataset"])
-        parts = dirichlet_partition(y.numpy(), cfg["num_devices"], cfg["dirichlet_alpha"], cfg["seed"])
+        y = y.numpy()
+        if vfrac > 0:
+            # Validation hold-out for hyper-parameter selection: a stratified vfrac of the TRAINING
+            # set, removed from every device; the test set is never read by these runs.
+            rng = np.random.RandomState(1000 + cfg["seed"])
+            val = np.sort(np.concatenate([rng.permutation(np.where(y == k)[0])[: int(round(vfrac * (y == k).sum()))]
+                                          for k in np.unique(y)]))
+            rest = np.setdiff1d(np.arange(len(y)), val)
+            parts = [rest[p] for p in dirichlet_partition(y[rest], cfg["num_devices"], cfg["dirichlet_alpha"], cfg["seed"])]
+            np.save(vfile, val)
+        else:
+            parts = dirichlet_partition(y, cfg["num_devices"], cfg["dirichlet_alpha"], cfg["seed"])
         if cfg.get("max_samples_per_device"):
             rng = np.random.RandomState(cfg["seed"])
             parts = [np.sort(rng.permutation(p)[: cfg["max_samples_per_device"]]) for p in parts]
         save_partition(pfile, parts, {"dataset": cfg["dataset"], "num_devices": cfg["num_devices"],
                                       "alpha": cfg["dirichlet_alpha"], "seed": cfg["seed"],
-                                      "max_samples_per_device": cfg.get("max_samples_per_device")})
+                                      "max_samples_per_device": cfg.get("max_samples_per_device"),
+                                      "val_frac": vfrac or None})
     ifile = os.path.join(ROOT, "checkpoints/init", f"{cfg['model']}_{cfg['dataset']}_s{cfg['seed']}.pt")
     if not os.path.exists(ifile):
         os.makedirs(os.path.dirname(ifile), exist_ok=True)
@@ -107,7 +123,7 @@ def shared_artifacts(cfg):
         with open(os.path.join(ROOT, "results/manifests", f"init_{cfg['model']}_{cfg['dataset']}_s{cfg['seed']}.json"), "w") as f:
             json.dump({"sha256": sd_digest(sd), "num_params": int(sum(v.numel() for v in sd.values()))}, f)
     profiles = make_profiles(cfg["num_devices"], cfg["seed"], cfg["base_epoch_time"], cfg["hetero"], cfg["bw_min"], cfg["bw_max"])
-    return pfile, ifile, profiles_to_json(profiles)
+    return pfile, ifile, profiles_to_json(profiles), vfile
 
 
 def run_one(cfg, dry=False):
@@ -125,10 +141,10 @@ def run_one(cfg, dry=False):
         print(f"[skip] {rid} already COMPLETED")
         return "SKIPPED"
     os.makedirs(mdir, exist_ok=True)
-    pfile, ifile, profiles = shared_artifacts(cfg)
+    pfile, ifile, profiles, vfile = shared_artifacts(cfg)
     run_dir = os.path.join(ROOT, "workspaces/runs", rid)
     os.makedirs(run_dir, exist_ok=True)
-    cfg.update(partition_file=pfile, init_weights=ifile, profiles=profiles, metrics_dir=mdir, run_dir=run_dir,
+    cfg.update(val_file=vfile, partition_file=pfile, init_weights=ifile, profiles=profiles, metrics_dir=mdir, run_dir=run_dir,
                checkpoint_dir=os.path.join(ROOT, "checkpoints", rid))
     if cfg["algorithm"].startswith("fedasmu"):
         hist = os.path.join(ROOT, "results/metrics", f"metahist_{cfg['model']}_{cfg['dataset']}.json")
