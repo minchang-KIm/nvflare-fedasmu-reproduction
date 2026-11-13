@@ -171,3 +171,10 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
   - Factors: LeNet 2.9 / 1.9 / 1.7, CNN 11.1 / 13.1, ResNet 0.61 / 0.63, AlexNet 0.26 / 0.25, VGG 1.5 / 1.7.
   - TextCNN gets no factor (1) because its curves do not rise.
 - 2026-11-13, Notion page condensed to the verification essentials. Filled the finished cells: AlexNet / CIFAR-100 (FedASMU 0.262, FedBuff 0.188, FedAvg 0.284) and VGG-11 FedBuff / FedAvg. TextCNN v2 re-run passes 28/28, so D5 is now confirmed. 33 of 36 runs done; ResNet-20 / Tiny-ImageNet is still running.
+- 2026-11-13, FedASMU-only tuning of unpublished constants on a validation split (val_frac 0.1 of the training set; the test set is not read). Grid μα ∈ {1, 3, 10} × μβ ∈ {1, 10}. The selection rule was fixed before the runs (`configs/experiments/tune.yaml`). Both CIFAR-10 workloads chose μα = 1, μβ = 10.
+  - Test results of the chosen setting, both runs passing verification 28/28:
+    - LeNet / CIFAR-10: FedASMU 0.508 (default 0.448), FedBuff 0.540, FedAvg 0.504.
+    - CNN / CIFAR-10: FedASMU 0.570 (default 0.537), FedBuff 0.564, FedAvg 0.540.
+  - Figures: `results/figures/tuned/`. Baselines were not tuned, so this comparison favours FedASMU.
+  - CIFAR-100 ×2 and FMNIST are queued (`scripts/queue_tune.sh`).
+- 2026-11-13, `scripts/vgg_pilot_figure.py`: the VGG-11 pilot runs behind the bar chart (FedBuff 66.2 / FedASMU 67.3 on CIFAR-10, 26.5 / 29.2 on CIFAR-100) compared with paper Figures 5(b) and 6(b), with no curve cut.

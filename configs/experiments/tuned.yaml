@@ -1,0 +1,19 @@
+# Written by scripts/select_tuned.py from the validation runs (results/reports/tuning_validation.csv).
+# Normal appendix split and test evaluation; compared with the appendix FedBuff / FedAvg runs.
+overrides:
+  trace: true
+runs:
+- model: cnn
+  dataset: cifar10
+  algorithm: fedasmu
+  variant: m1b10
+  fedasmu:
+    mu_alpha: 1.0
+    mu_beta: 10.0
+- model: lenet5
+  dataset: cifar10
+  algorithm: fedasmu
+  variant: m1b10
+  fedasmu:
+    mu_alpha: 1.0
+    mu_beta: 10.0

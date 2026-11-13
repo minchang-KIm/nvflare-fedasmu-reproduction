@@ -1,6 +1,9 @@
 workload,model,dataset,mu_alpha,mu_beta,val_final,val_time
+cnn-cifar10,cnn,cifar10,10.0,10.0,0.5500399999999999,1689.493
+cnn-cifar10,cnn,cifar10,10.0,1.0,0.5458000000000001,1689.493
 cnn-cifar10,cnn,cifar10,1.0,10.0,0.5686,1689.493
 cnn-cifar10,cnn,cifar10,1.0,1.0,0.56756,1689.493
+cnn-cifar10,cnn,cifar10,3.0,10.0,0.5621599999999999,1689.493
 cnn-cifar10,cnn,cifar10,3.0,1.0,0.5645200000000001,1689.493
 lenet5-cifar10,lenet5,cifar10,10.0,10.0,0.4766800000000001,2406.174
 lenet5-cifar10,lenet5,cifar10,10.0,1.0,0.45152000000000003,2406.174
