@@ -1,0 +1,7 @@
+workload,method,run,final_acc_pct,last_vtime_s
+vgg11-cifar10,FedASMU,pilot_vgg11_cifar10_fedasmu_s0,67.35,249901
+vgg11-cifar10,FedAvg,fedavg_vgg11_cifar10_fedavg_s0,68.21,365384
+vgg11-cifar10,FedBuff,pilot_vgg11_cifar10_fedbuff_s0,66.24,242743
+vgg11-cifar100,FedASMU,pilot_vgg11_cifar100_fedasmu_s0,29.23,249191
+vgg11-cifar100,FedAvg,fedavg_vgg11_cifar100_fedavg_s0,28.04,365468
+vgg11-cifar100,FedBuff,pilot_vgg11_cifar100_fedbuff_s0,26.49,242591
