@@ -170,3 +170,4 @@ records a hash is necessarily the *next* one; each entry lists the code commit).
 - 2026-11-12, both paper versions re-checked: neither gives any absolute time (time per epoch, per training or per round), bandwidth value or speed distribution, only "Time (s)" axes. `appendix_figures.py` now also writes `appendix_figN_timefit.png`, which rescales our time axis by one factor per workload (fitted from FedASMU and FedBuff rise times, `time_scale.json`); accuracies are unchanged.
   - Factors: LeNet 2.9 / 1.9 / 1.7, CNN 11.1 / 13.1, ResNet 0.61 / 0.63, AlexNet 0.26 / 0.25, VGG 1.5 / 1.7.
   - TextCNN gets no factor (1) because its curves do not rise.
+- 2026-11-13, Notion page condensed to the verification essentials. Filled the finished cells: AlexNet / CIFAR-100 (FedASMU 0.262, FedBuff 0.188, FedAvg 0.284) and VGG-11 FedBuff / FedAvg. TextCNN v2 re-run passes 28/28, so D5 is now confirmed. 33 of 36 runs done; ResNet-20 / Tiny-ImageNet is still running.
