@@ -46,7 +46,7 @@ def main():
         scales[key] = {"scale": s, "ratios": [round(v, 3) for v in ratios]}
         ax[r, 0].imshow(mpimg.imread(os.path.join(PAPER, f"{key}.png")))
         ax[r, 0].axis("off")
-        ax[r, 0].set_title(f"{title} - paper ({pfig})", fontsize=10)
+        ax[r, 0].set_title(f"{title} - paper", fontsize=10)
         x, ymax, xmax = ax[r, 1], a["ylim"][1], a["xlim"][1]
         for n, al, col, mk in RUNS:
             d = data[n]
@@ -67,10 +67,8 @@ def main():
         for sp in ("top", "right"):
             x.spines[sp].set_visible(False)
         x.legend(fontsize=9, loc="lower right", frameon=False)
-        x.set_title(f"{title} - ours (time x{s:.2f})", fontsize=10)
-    f.suptitle("VGG-11: paper (left) vs our runs behind the bar chart (right)\n"
-               "our time axis scaled to the paper's (no time per epoch in the paper)", fontsize=10)
-    f.tight_layout(rect=(0, 0, 1, 0.94))
+        x.set_title(f"{title} - ours", fontsize=10)
+    f.tight_layout()
     f.savefig(os.path.join(OUT, "vgg11_pilot_vs_paper_timefit.png"), dpi=110)
     json.dump(scales, open(os.path.join(OUT, "timefit_scale.json"), "w"), indent=1)
     print(scales)
